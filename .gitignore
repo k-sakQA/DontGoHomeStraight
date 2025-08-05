@@ -91,3 +91,7 @@ iOSInjectionProject/
 
 ## macOS
 .DS_Store
+
+# API Keys
+DontGoHomeStraight/App/Config/Config.plist
+Config.xcconfig

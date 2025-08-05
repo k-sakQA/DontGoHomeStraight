@@ -3,37 +3,42 @@ import Foundation
 enum Environment {
     enum Keys {
         static let openAIAPIKey = "OPENAI_API_KEY"
-        static let googleMapsAPIKey = "GOOGLE_MAPS_API_KEY"
         static let googlePlacesAPIKey = "GOOGLE_PLACES_API_KEY"
     }
     
     static func value(for key: String) -> String {
-        guard let value = Bundle.main.infoDictionary?[key] as? String else {
-            #if DEBUG
-            // 開発環境用のフォールバック
-            switch key {
-            case Keys.openAIAPIKey:
-                return "sk-dev-openai-key"
-            case Keys.googleMapsAPIKey:
-                return "dev-google-maps-key"
-            case Keys.googlePlacesAPIKey:
-                return "dev-google-places-key"
-            default:
-                fatalError("環境変数 \(key) が設定されていません")
-            }
-            #else
-            fatalError("環境変数 \(key) が設定されていません")
-            #endif
+        // まず設定ファイルから読み込みを試行
+        if let configPath = Bundle.main.path(forResource: "Config", ofType: "plist"),
+           let configDict = NSDictionary(contentsOfFile: configPath),
+           let value = configDict[key] as? String,
+           !value.isEmpty && !value.hasPrefix("YOUR_") {
+            return value
         }
-        return value
+        
+        // 次にInfo.plistから読み込み（環境変数形式）
+        if let value = Bundle.main.infoDictionary?[key] as? String,
+           !value.isEmpty && !value.hasPrefix("$(") {
+            return value
+        }
+        
+        #if DEBUG
+        // 開発環境用のフォールバック
+        print("⚠️ APIキー '\(key)' が設定されていません。Config.plistファイルを確認してください。")
+        switch key {
+        case Keys.openAIAPIKey:
+            return "sk-dev-openai-key"
+        case Keys.googlePlacesAPIKey:
+            return "dev-google-places-key"
+        default:
+            fatalError("環境変数 \(key) が設定されていません")
+        }
+        #else
+        fatalError("環境変数 \(key) が設定されていません。本番環境ではAPIキーが必要です。")
+        #endif
     }
     
     static var openAIAPIKey: String {
         return value(for: Keys.openAIAPIKey)
-    }
-    
-    static var googleMapsAPIKey: String {
-        return value(for: Keys.googleMapsAPIKey)
     }
     
     static var googlePlacesAPIKey: String {
