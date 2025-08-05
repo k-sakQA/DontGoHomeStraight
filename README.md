@@ -29,5 +29,5 @@ git clone https://github.com/k-sakQA/DontGoHomeStraight.git
 
 ## 作成者
 
-- k-sakQA
+- Sakata Kazunori
 - 作成日: 2025/08/05
