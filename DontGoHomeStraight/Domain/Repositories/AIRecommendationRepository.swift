@@ -14,7 +14,23 @@ struct AIRecommendationRequest {
     let transportMode: TransportMode
     let excludedPlaceIds: [String]
     
-
+    func toPrompt() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy年MM月dd日 HH:mm"
+        
+        return """
+        現在地: \(currentLocation.latitude), \(currentLocation.longitude)
+        目的地: \(destination.latitude), \(destination.longitude)
+        現在時刻: \(formatter.string(from: currentTime))
+        気分: \(mood.description)
+        移動手段: \(transportMode.displayName)
+        除外スポット: \(excludedPlaceIds.joined(separator: ", "))
+        
+        上記の条件で、経由地として最適な3つのスポットを提案してください。
+        飲食店を30%、それ以外を70%の割合で含めてください。
+        各スポットについて、Google Places APIで検索可能な具体的な店名または施設名を回答してください。
+        """
+    }
 }
 
 

@@ -4,8 +4,8 @@ import CoreLocation
 class AIRecommendationRepositoryImpl: AIRecommendationRepository {
     private let openAIClient: OpenAIAPIClient
     
-    init(apiKey: String) {
-        self.openAIClient = OpenAIAPIClient(apiKey: apiKey)
+    init(apiClient: OpenAIAPIClient) {
+        self.openAIClient = apiClient
     }
     
     func getRecommendations(request: AIRecommendationRequest) async throws -> [String] {

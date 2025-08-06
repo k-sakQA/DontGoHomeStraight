@@ -4,8 +4,8 @@ import CoreLocation
 class PlaceRepositoryImpl: PlaceRepository {
     private let googlePlacesClient: GooglePlacesAPIClient
     
-    init(apiKey: String) {
-        self.googlePlacesClient = GooglePlacesAPIClient(apiKey: apiKey)
+    init(apiClient: GooglePlacesAPIClient) {
+        self.googlePlacesClient = apiClient
     }
     
     func searchPlace(name: String, near location: CLLocationCoordinate2D) async throws -> Place? {
