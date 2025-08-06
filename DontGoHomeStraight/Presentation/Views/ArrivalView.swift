@@ -424,7 +424,7 @@ struct AnimatedRevealCard: View {
 // MARK: - Preview
 
 #Preview {
-    NavigationView {
+    SwiftUI.NavigationView {
         ArrivalView(viewModel: {
             let vm = AppViewModel.preview
             vm.arrivedPlace = Place(
@@ -452,7 +452,7 @@ struct AnimatedRevealCard: View {
 }
 
 #Preview("Museum") {
-    NavigationView {
+    SwiftUI.NavigationView {
         ArrivalView(viewModel: {
             let vm = AppViewModel.preview
             vm.arrivedPlace = Place(

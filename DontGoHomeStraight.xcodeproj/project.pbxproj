@@ -6,19 +6,57 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		7BEDA9482E43ACE7004AB522 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7BF7846C2E4205490040A86C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7BF784732E4205490040A86C;
+			remoteInfo = DontGoHomeStraight;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		7BEDA9442E43ACE7004AB522 /* DontGoHomeStraightTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DontGoHomeStraightTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7BF784742E4205490040A86C /* DontGoHomeStraight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DontGoHomeStraight.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7BEDA93F2E437CB2004AB522 /* Exceptions for "DontGoHomeStraight" folder in "DontGoHomeStraight" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				Tests/DomainTests/GenreTests.swift,
+				Tests/DomainTests/MoodTests.swift,
+			);
+			target = 7BF784732E4205490040A86C /* DontGoHomeStraight */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		7BEDA9452E43ACE7004AB522 /* DontGoHomeStraightTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DontGoHomeStraightTests;
+			sourceTree = "<group>";
+		};
 		7BF784762E4205490040A86C /* DontGoHomeStraight */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7BEDA93F2E437CB2004AB522 /* Exceptions for "DontGoHomeStraight" folder in "DontGoHomeStraight" target */,
+			);
 			path = DontGoHomeStraight;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		7BEDA9412E43ACE7004AB522 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7BF784712E4205490040A86C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -33,6 +71,7 @@
 			isa = PBXGroup;
 			children = (
 				7BF784762E4205490040A86C /* DontGoHomeStraight */,
+				7BEDA9452E43ACE7004AB522 /* DontGoHomeStraightTests */,
 				7BF784752E4205490040A86C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				7BF784742E4205490040A86C /* DontGoHomeStraight.app */,
+				7BEDA9442E43ACE7004AB522 /* DontGoHomeStraightTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,6 +88,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		7BEDA9432E43ACE7004AB522 /* DontGoHomeStraightTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7BEDA94A2E43ACE7004AB522 /* Build configuration list for PBXNativeTarget "DontGoHomeStraightTests" */;
+			buildPhases = (
+				7BEDA9402E43ACE7004AB522 /* Sources */,
+				7BEDA9412E43ACE7004AB522 /* Frameworks */,
+				7BEDA9422E43ACE7004AB522 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7BEDA9492E43ACE7004AB522 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				7BEDA9452E43ACE7004AB522 /* DontGoHomeStraightTests */,
+			);
+			name = DontGoHomeStraightTests;
+			packageProductDependencies = (
+			);
+			productName = DontGoHomeStraightTests;
+			productReference = 7BEDA9442E43ACE7004AB522 /* DontGoHomeStraightTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		7BF784732E4205490040A86C /* DontGoHomeStraight */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7BF7847F2E42054B0040A86C /* Build configuration list for PBXNativeTarget "DontGoHomeStraight" */;
@@ -80,6 +143,10 @@
 				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
+					7BEDA9432E43ACE7004AB522 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 7BF784732E4205490040A86C;
+					};
 					7BF784732E4205490040A86C = {
 						CreatedOnToolsVersion = 16.4;
 					};
@@ -100,11 +167,19 @@
 			projectRoot = "";
 			targets = (
 				7BF784732E4205490040A86C /* DontGoHomeStraight */,
+				7BEDA9432E43ACE7004AB522 /* DontGoHomeStraightTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		7BEDA9422E43ACE7004AB522 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7BF784722E4205490040A86C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -115,6 +190,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		7BEDA9402E43ACE7004AB522 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7BF784702E4205490040A86C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -124,7 +206,51 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		7BEDA9492E43ACE7004AB522 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7BF784732E4205490040A86C /* DontGoHomeStraight */;
+			targetProxy = 7BEDA9482E43ACE7004AB522 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		7BEDA94B2E43ACE7004AB522 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YX6MM5Q6Y6;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = kazunori.sakata.ts.DontGoHomeStraightTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DontGoHomeStraight.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/DontGoHomeStraight";
+			};
+			name = Debug;
+		};
+		7BEDA94C2E43ACE7004AB522 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YX6MM5Q6Y6;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = kazunori.sakata.ts.DontGoHomeStraightTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DontGoHomeStraight.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/DontGoHomeStraight";
+			};
+			name = Release;
+		};
 		7BF7847D2E42054B0040A86C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -256,7 +382,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DontGoHomeStraight/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -286,7 +413,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DontGoHomeStraight/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -309,6 +437,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		7BEDA94A2E43ACE7004AB522 /* Build configuration list for PBXNativeTarget "DontGoHomeStraightTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7BEDA94B2E43ACE7004AB522 /* Debug */,
+				7BEDA94C2E43ACE7004AB522 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		7BF7846F2E4205490040A86C /* Build configuration list for PBXProject "DontGoHomeStraight" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

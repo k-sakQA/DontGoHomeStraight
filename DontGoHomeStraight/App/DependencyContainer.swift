@@ -42,6 +42,7 @@ class DependencyContainer {
     
     // MARK: - View Models
     
+    @MainActor
     lazy var appViewModel: AppViewModel = {
         return AppViewModel(
             placeRecommendationUseCase: placeRecommendationUseCase,

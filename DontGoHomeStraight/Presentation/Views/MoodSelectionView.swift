@@ -377,7 +377,7 @@ struct MoodPreviewCard: View {
 // MARK: - Preview
 
 #Preview {
-    NavigationView {
+    SwiftUI.NavigationView {
         MoodSelectionView(viewModel: AppViewModel.preview)
     }
 }

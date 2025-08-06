@@ -11,7 +11,7 @@ struct ContentView: View {
     @StateObject private var appViewModel = DependencyContainer.shared.appViewModel
     
     var body: some View {
-        NavigationView {
+        SwiftUI.NavigationView {
             ZStack {
                 // メイン画面
                 mainContent
@@ -153,7 +153,7 @@ struct AppNavigationView<Content: View>: View {
     }
     
     var body: some View {
-        NavigationView {
+        SwiftUI.NavigationView {
             content
         }
         .navigationViewStyle(StackNavigationViewStyle())
@@ -188,7 +188,7 @@ struct AnimatedContentView: View {
     @StateObject private var appViewModel = DependencyContainer.shared.appViewModel
     
     var body: some View {
-        NavigationView {
+        SwiftUI.NavigationView {
             ZStack {
                 // 背景グラデーション
                 LinearGradient(

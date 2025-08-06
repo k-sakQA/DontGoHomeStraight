@@ -290,7 +290,7 @@ struct NavigationView: View {
         
         Task {
             do {
-                try await viewModel.navigationUseCase.startNavigation(
+                _ = try await viewModel.navigationUseCase.startNavigation(
                     origin: route.origin,
                     destination: route.destination,
                     selectedGenre: viewModel.selectedGenre!,
@@ -389,7 +389,7 @@ struct NavigationProgressView: View {
 // MARK: - Preview
 
 #Preview {
-    NavigationView {
+    SwiftUI.NavigationView {
         NavigationView(viewModel: {
             let vm = AppViewModel.preview
             vm.selectedGenre = Genre(name: "カフェ", category: .restaurant, googleMapType: "cafe")
@@ -413,7 +413,7 @@ struct NavigationProgressView: View {
 }
 
 #Preview("No Route") {
-    NavigationView {
+    SwiftUI.NavigationView {
         NavigationView(viewModel: AppViewModel.preview)
     }
 }

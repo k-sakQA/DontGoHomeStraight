@@ -383,17 +383,9 @@ struct EnhancedGenreCard: View {
     private var circleColor: Color {
         switch genre.category {
         case .restaurant:
-            return LinearGradient(
-                gradient: Gradient(colors: [.orange, .red]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            ).primary
+            return .orange
         case .other:
-            return LinearGradient(
-                gradient: Gradient(colors: [.blue, .purple]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            ).primary
+            return .blue
         }
     }
     
@@ -413,7 +405,7 @@ struct EnhancedGenreCard: View {
 // MARK: - Preview
 
 #Preview {
-    NavigationView {
+    SwiftUI.NavigationView {
         GenreSelectionView(viewModel: {
             let vm = AppViewModel.preview
             vm.recommendedGenres = [
@@ -427,7 +419,7 @@ struct EnhancedGenreCard: View {
 }
 
 #Preview("Loading") {
-    NavigationView {
+    SwiftUI.NavigationView {
         GenreSelectionView(viewModel: {
             let vm = AppViewModel.preview
             vm.isLoading = true
@@ -438,7 +430,7 @@ struct EnhancedGenreCard: View {
 }
 
 #Preview("Empty State") {
-    NavigationView {
+    SwiftUI.NavigationView {
         GenreSelectionView(viewModel: {
             let vm = AppViewModel.preview
             vm.recommendedGenres = []

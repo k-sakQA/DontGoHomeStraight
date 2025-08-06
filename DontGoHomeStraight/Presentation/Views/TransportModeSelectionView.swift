@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreLocation
 
 struct TransportModeSelectionView: View {
     @ObservedObject var viewModel: AppViewModel
@@ -406,13 +407,13 @@ struct TransportModeSelectionWithEstimatesView: View {
 // MARK: - Preview
 
 #Preview {
-    NavigationView {
+    SwiftUI.NavigationView {
         TransportModeSelectionView(viewModel: AppViewModel.preview)
     }
 }
 
 #Preview("With Estimates") {
-    NavigationView {
+    SwiftUI.NavigationView {
         TransportModeSelectionWithEstimatesView(viewModel: AppViewModel.preview)
     }
 }

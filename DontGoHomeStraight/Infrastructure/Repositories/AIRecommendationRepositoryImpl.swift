@@ -56,68 +56,36 @@ class AIRecommendationRepositoryImpl: AIRecommendationRepository {
 extension AIRecommendationRequest {
     func toPrompt() -> String {
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy年MM月dd日 HH時mm分"
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm"
         dateFormatter.locale = Locale(identifier: "ja_JP")
-        dateFormatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
-        
-        let currentTimeString = dateFormatter.string(from: currentTime)
-        
-        // 移動距離の計算
-        let distance = CLLocation(latitude: currentLocation.latitude, longitude: currentLocation.longitude)
-            .distance(from: CLLocation(latitude: destination.latitude, longitude: destination.longitude))
-        let distanceKm = distance / 1000.0
-        
-        // 除外スポットの処理
-        let excludedText = excludedPlaceIds.isEmpty ? "なし" : excludedPlaceIds.joined(separator: ", ")
         
         return """
-        【経由地推薦依頼】
-        
-        ■基本情報
-        現在地: 緯度\(currentLocation.latitude), 経度\(currentLocation.longitude)
-        目的地: 緯度\(destination.latitude), 経度\(destination.longitude)
-        移動距離: 約\(String(format: "%.1f", distanceKm))km
-        現在時刻: \(currentTimeString)
+        現在地: \(currentLocation.latitude), \(currentLocation.longitude)
+        目的地: \(destination.latitude), \(destination.longitude)
+        現在時刻: \(dateFormatter.string(from: currentTime))
+        気分: \(mood.description)
         移動手段: \(transportMode.displayName)
+        除外スポット: \(excludedPlaceIds.joined(separator: ", "))
         
-        ■ユーザーの気分
-        \(mood.description)
-        - アクティビティ: \(mood.activityType.displayName) \(mood.activityType.emoji)
-        - バイブ: \(mood.vibeType.displayName) \(mood.vibeType.emoji)
+        上記の条件で、経由地として最適な3つのスポットを提案してください。
+        飲食店を30%、それ以外を70%の割合で含めてください。
+        各スポットについて、GooglePlaces APIで検索可能な具体的な店名または施設名を回答してください。
         
-        ■制約条件
-        - 除外スポット: \(excludedText)
-        - 飲食店: 30%（1件）
-        - その他スポット: 70%（2件）
-        - 現在地と目的地の間、または少し迂回した場所
-        - 実在する具体的な店名・施設名
-        
-        上記の条件に基づいて、魅力的な経由地を3つ提案してください。
-        ユーザーの気分と移動手段を考慮し、楽しい寄り道体験を提供してください。
+        回答は以下のJSON形式で提供してください：
+        [
+          {
+            "name": "具体的なスポット名",
+            "category": "restaurant" または "other",
+            "reason": "推薦理由"
+          }
+        ]
         """
     }
 }
 
 // MARK: - Helper Extensions
 
-private extension Mood {
-    var detailedDescription: String {
-        switch (activityType, vibeType) {
-        case (.indoor, .jazzy):
-            return "落ち着いた室内で、ジャズが似合うような洗練された雰囲気を求めています"
-        case (.indoor, .discovery):
-            return "室内で新しい発見や学びがある場所を探しています"
-        case (.indoor, .exciting):
-            return "室内でワクワクするような刺激的な体験を求めています"
-        case (.outdoor, .jazzy):
-            return "屋外で、ジャズが似合うような洗練された雰囲気の場所を求めています"
-        case (.outdoor, .discovery):
-            return "屋外で新しい発見や驚きがある場所を探しています"
-        case (.outdoor, .exciting):
-            return "屋外でワクワクするような活動的な体験を求めています"
-        }
-    }
-}
+
 
 private extension TransportMode {
     var suitableSpotTypes: [String] {

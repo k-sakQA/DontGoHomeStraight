@@ -324,7 +324,7 @@ struct MapAnnotation: Identifiable {
 // MARK: - Preview
 
 #Preview {
-    NavigationView {
+    SwiftUI.NavigationView {
         DestinationSettingView(viewModel: AppViewModel.preview)
     }
 }

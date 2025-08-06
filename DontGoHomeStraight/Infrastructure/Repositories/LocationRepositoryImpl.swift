@@ -62,7 +62,7 @@ class LocationRepositoryImpl: NSObject, LocationRepository {
     func startGoogleMapsNavigation(route: NavigationRoute) async throws {
         // Google Mapsアプリがインストールされているかチェック
         guard let googleMapsURL = route.googleMapsURL,
-              UIApplication.shared.canOpenURL(googleMapsURL) else {
+              await UIApplication.shared.canOpenURL(googleMapsURL) else {
             
             // Google Mapsが利用できない場合はApple Mapsを使用
             if let appleMapsURL = route.appleMapsURL {

@@ -61,7 +61,7 @@ extension NavigationRoute {
     
     var formattedDuration: String {
         let hours = Int(estimatedDuration) / 3600
-        let minutes = Int(estimatedDuration % 3600) / 60
+        let minutes = Int(estimatedDuration.truncatingRemainder(dividingBy: 3600)) / 60
         
         if hours > 0 {
             return String(format: "%d時間%d分", hours, minutes)
@@ -101,7 +101,7 @@ extension NavigationRoute {
         var components = URLComponents(string: "http://maps.apple.com/")
         components?.queryItems = [
             URLQueryItem(name: "saddr", value: "\(origin.latitude),\(origin.longitude)"),
-            URLQueryItem(name: "daddr", value: destinationQuery),
+            URLQueryItem(name: "daddr", value: "\(waypointQuery)+to:\(destinationQuery)"),
             URLQueryItem(name: "dirflg", value: transportMode.appleMapsMode)
         ]
         

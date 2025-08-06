@@ -30,7 +30,7 @@ class AppViewModel: ObservableObject {
     // MARK: - Use Cases
     
     private let placeRecommendationUseCase: PlaceRecommendationUseCase
-    private let navigationUseCase: NavigationUseCase
+    let navigationUseCase: NavigationUseCase
     private let locationRepository: LocationRepository
     
     // MARK: - Private Properties
