@@ -267,8 +267,8 @@ struct NavigationView: View {
         }
         
         Task {
-            if let waypoint = await viewModel.navigationUseCase.getWaypointForGenre(selectedGenre) {
-                let isArrived = viewModel.navigationUseCase.checkArrival(
+            if let waypoint = await viewModel.getWaypointForGenre(selectedGenre) {
+                let isArrived = viewModel.checkArrival(
                     currentLocation: currentLocation,
                     waypoint: waypoint,
                     threshold: 100.0 // 100m以内で到着とみなす
@@ -290,7 +290,7 @@ struct NavigationView: View {
         
         Task {
             do {
-                _ = try await viewModel.navigationUseCase.startNavigation(
+                _ = try await viewModel.startNavigationWithRoute(
                     origin: route.origin,
                     destination: route.destination,
                     selectedGenre: viewModel.selectedGenre!,

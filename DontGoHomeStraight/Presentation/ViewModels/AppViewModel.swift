@@ -30,7 +30,7 @@ class AppViewModel: ObservableObject {
     // MARK: - Use Cases
     
     private let placeRecommendationUseCase: PlaceRecommendationUseCase
-    let navigationUseCase: NavigationUseCase
+    private let navigationUseCase: NavigationUseCase
     private let locationRepository: LocationRepository
     
     // MARK: - Private Properties
@@ -177,6 +177,20 @@ class AppViewModel: ObservableObject {
     
     func startLocationUpdates() {
         locationRepository.startUpdatingLocation()
+    }
+    
+    // MARK: - Navigation Use Case Wrapper Methods
+    
+    func getWaypointForGenre(_ genre: Genre) async -> Place? {
+        return await navigationUseCase.getWaypointForGenre(genre)
+    }
+    
+    func checkArrival(currentLocation: CLLocationCoordinate2D, waypoint: Place, threshold: CLLocationDistance = 50.0) -> Bool {
+        return navigationUseCase.checkArrival(currentLocation: currentLocation, waypoint: waypoint, threshold: threshold)
+    }
+    
+    func startNavigationWithRoute(origin: CLLocationCoordinate2D, destination: CLLocationCoordinate2D, selectedGenre: Genre, transportMode: TransportMode) async throws -> NavigationRoute {
+        return try await navigationUseCase.startNavigation(origin: origin, destination: destination, selectedGenre: selectedGenre, transportMode: transportMode)
     }
     
     private func getRecommendations() async {
