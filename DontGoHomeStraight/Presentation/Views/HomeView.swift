@@ -54,6 +54,31 @@ struct HomeView: View {
                         .background(Color.blue)
                         .cornerRadius(12)
                     }
+                    
+                    // キャッシュ削除ボタン
+                    Button(action: {
+                        Task {
+                            await viewModel.clearRecommendationCache()
+                        }
+                    }) {
+                        HStack {
+                            if viewModel.isLoading {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                    .tint(.white)
+                            } else {
+                                Image(systemName: "trash")
+                            }
+                            Text("キャッシュ削除")
+                        }
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.gray)
+                        .cornerRadius(8)
+                    }
+                    .disabled(viewModel.isLoading)
                 } else {
                     Button(action: {
                         viewModel.requestLocationPermission()

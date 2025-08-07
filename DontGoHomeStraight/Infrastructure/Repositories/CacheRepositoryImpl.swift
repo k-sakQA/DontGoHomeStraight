@@ -157,8 +157,11 @@ class CacheRepositoryImpl: CacheRepository {
         // マッピングデータクリア
         userDefaults.removeObject(forKey: Keys.genrePlaceMapping)
         
+        // 除外リストクリア
+        userDefaults.removeObject(forKey: Keys.excludedPlaceIds)
+        
         #if DEBUG
-        print("🧹 キャッシュをクリアしました")
+        print("🧹 キャッシュと除外リストをクリアしました")
         #endif
     }
     

@@ -179,6 +179,22 @@ class AppViewModel: ObservableObject {
         locationRepository.startUpdatingLocation()
     }
     
+    // MARK: - Cache Management
+    
+    func clearRecommendationCache() async {
+        isLoading = true
+        do {
+            try await placeRecommendationUseCase.clearCache()
+            #if DEBUG
+            print("🧹 推薦キャッシュをクリアしました")
+            #endif
+        } catch {
+            errorMessage = "キャッシュのクリアに失敗しました"
+            showError = true
+        }
+        isLoading = false
+    }
+    
     // MARK: - Navigation Use Case Wrapper Methods
     
     func getWaypointForGenre(_ genre: Genre) async -> Place? {

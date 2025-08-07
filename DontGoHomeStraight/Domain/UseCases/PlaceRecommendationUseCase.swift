@@ -8,6 +8,8 @@ protocol PlaceRecommendationUseCase {
         mood: Mood,
         transportMode: TransportMode
     ) async throws -> [Genre]
+    
+    func clearCache() async throws
 }
 
 class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
@@ -204,5 +206,9 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
         default:
             return category == .restaurant ? "グルメ" : "スポット"
         }
+    }
+    
+    func clearCache() async throws {
+        await cacheRepository.clearCache()
     }
 }
