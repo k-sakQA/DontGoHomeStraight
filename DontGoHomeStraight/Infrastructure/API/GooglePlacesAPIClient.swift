@@ -14,7 +14,17 @@ class GooglePlacesAPIClient {
         let encodedQuery = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let urlString = "\(baseURL)/textsearch/json?query=\(encodedQuery)&location=\(location.latitude),\(location.longitude)&radius=5000&key=\(apiKey)"
         
+        #if DEBUG
+        print("🔍 Google Places API Request:")
+        print("  Query: \(name)")
+        print("  Location: \(location.latitude), \(location.longitude)")
+        print("  URL: \(urlString)")
+        #endif
+        
         guard let url = URL(string: urlString) else {
+            #if DEBUG
+            print("❌ Invalid URL")
+            #endif
             throw PlaceRepositoryError.searchFailed
         }
         
@@ -27,22 +37,63 @@ class GooglePlacesAPIClient {
             
             switch httpResponse.statusCode {
             case 200...299:
+                #if DEBUG
+                print("✅ Google Places API Success - Status: \(httpResponse.statusCode)")
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("📤 Response: \(responseString)")
+                }
+                #endif
+                
                 let searchResponse = try JSONDecoder().decode(GooglePlacesSearchResponse.self, from: data)
+                
+                #if DEBUG
+                print("📋 Found \(searchResponse.results.count) results")
+                if let firstResult = searchResponse.results.first {
+                    print("🎯 First result: \(firstResult.name)")
+                } else {
+                    print("❌ No results found")
+                }
+                #endif
+                
                 return searchResponse.results.first?.toPlace()
                 
             case 400:
+                #if DEBUG
+                print("❌ Google Places API Error 400 - Bad Request")
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("📤 Error Response: \(responseString)")
+                }
+                #endif
                 throw PlaceRepositoryError.searchFailed
             case 401:
+                #if DEBUG
+                print("❌ Google Places API Error 401 - Unauthorized (Invalid API Key)")
+                #endif
                 throw PlaceRepositoryError.apiKeyInvalid
             case 429:
+                #if DEBUG
+                print("❌ Google Places API Error 429 - Quota Exceeded")
+                #endif
                 throw PlaceRepositoryError.quotaExceeded
             default:
+                #if DEBUG
+                print("❌ Google Places API Error \(httpResponse.statusCode)")
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("📤 Error Response: \(responseString)")
+                }
+                #endif
                 throw PlaceRepositoryError.networkError
             }
             
         } catch let error as PlaceRepositoryError {
+            #if DEBUG
+            print("❌ Google Places API Error: \(error)")
+            #endif
             throw error
         } catch {
+            #if DEBUG
+            print("❌ Google Places API Network Error: \(error)")
+            #endif
             throw PlaceRepositoryError.networkError
         }
     }

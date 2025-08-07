@@ -11,6 +11,12 @@ class OpenAIAPIClient {
     }
     
     func getRecommendations(request: AIRecommendationRequest) async throws -> [String] {
+        #if DEBUG
+        print("🤖 OpenAI API Call Start")
+        print("📝 API Key: \(String(apiKey.prefix(10)))...")
+        print("📍 Prompt: \(request.toPrompt())")
+        #endif
+        
         let openAIRequest = OpenAIRequest(
             model: "gpt-4",
             messages: [
@@ -38,20 +44,41 @@ class OpenAIAPIClient {
             
             switch httpResponse.statusCode {
             case 200...299:
+                #if DEBUG
+                print("✅ OpenAI API Success - Status: \(httpResponse.statusCode)")
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("📤 Response: \(responseString)")
+                }
+                #endif
                 let openAIResponse = try JSONDecoder().decode(OpenAIResponse.self, from: data)
                 return try parseRecommendations(from: openAIResponse)
                 
             case 401:
+                #if DEBUG
+                print("❌ OpenAI API Error - Unauthorized (401)")
+                #endif
                 throw AIRecommendationError.apiKeyInvalid
                 
             case 429:
+                #if DEBUG
+                print("❌ OpenAI API Error - Quota Exceeded (429)")
+                #endif
                 throw AIRecommendationError.quotaExceeded
                 
             default:
+                #if DEBUG
+                print("❌ OpenAI API Error - Status: \(httpResponse.statusCode)")
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("📤 Error Response: \(responseString)")
+                }
+                #endif
                 throw AIRecommendationError.aiServiceUnavailable
             }
             
         } catch let error as AIRecommendationError {
+            #if DEBUG
+            print("❌ OpenAI API Error: \(error)")
+            #endif
             throw error
         } catch {
             throw AIRecommendationError.networkError
@@ -64,12 +91,28 @@ class OpenAIAPIClient {
             throw AIRecommendationError.invalidResponse
         }
         
+        #if DEBUG
+        print("🔍 Parsing content: \(content)")
+        #endif
+        
         // JSONレスポンスをパース
         do {
             let jsonData = content.data(using: .utf8) ?? Data()
             let recommendations = try JSONDecoder().decode([AIRecommendationResponse].self, from: jsonData)
+            
+            #if DEBUG
+            print("✅ JSON Parse Success - \(recommendations.count) items:")
+            for (index, rec) in recommendations.enumerated() {
+                print("  \(index + 1). \(rec.name) (\(rec.category))")
+            }
+            #endif
+            
             return recommendations.map { $0.name }
         } catch {
+            #if DEBUG
+            print("❌ JSON Parse Failed: \(error)")
+            print("Trying fallback parsing...")
+            #endif
             // フォールバック: シンプルな文字列解析
             let lines = content.components(separatedBy: .newlines)
             let spotNames = lines.compactMap { line -> String? in
@@ -103,6 +146,7 @@ class OpenAIAPIClient {
         3. 除外リストに含まれるスポットは提案しないでください
         4. ユーザーの気分と移動手段を考慮してください
         5. Google Places APIで検索可能な具体的な店名・施設名で回答してください
+        6. スポットが室内施設の場合は、営業時間中のものにしてください
         
         【回答形式】
         以下のJSON形式で厳密に回答してください：

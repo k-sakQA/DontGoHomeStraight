@@ -202,6 +202,14 @@ class AppViewModel: ObservableObject {
             return
         }
         
+        #if DEBUG
+        print("🔍 Recommendations Request:")
+        print("  📍 Current: \(currentLocation)")
+        print("  🎯 Destination: \(destination.coordinate)")
+        print("  😊 Mood: \(mood.description)")
+        print("  🚶 Transport: \(transportMode.displayName)")
+        #endif
+        
         isLoading = true
         
         do {
@@ -212,7 +220,17 @@ class AppViewModel: ObservableObject {
                 transportMode: transportMode
             )
             
+            #if DEBUG
+            print("📋 Received Genres: \(genres.count) items")
+            for (index, genre) in genres.enumerated() {
+                print("  \(index + 1). \(genre.name) (\(genre.category))")
+            }
+            #endif
+            
             if genres.isEmpty {
+                #if DEBUG
+                print("❌ No genres returned - showing empty message")
+                #endif
                 showErrorMessage("候補地がありません。今日はまっすぐ帰りましょう🎵")
                 navigateToHome()
             } else {
@@ -221,6 +239,9 @@ class AppViewModel: ObservableObject {
             }
             
         } catch {
+            #if DEBUG
+            print("❌ Error in getRecommendations: \(error)")
+            #endif
             handleError(error)
         }
         

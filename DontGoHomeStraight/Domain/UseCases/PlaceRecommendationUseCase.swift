@@ -49,12 +49,33 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
         // 3. Google Places APIで実在性を確認し、有効なスポットを取得
         var validPlaces: [Place] = []
         
-        for recommendationName in aiRecommendations {
-            if let place = try? await placeRepository.searchPlace(
-                name: recommendationName,
-                near: currentLocation
-            ) {
-                validPlaces.append(place)
+        #if DEBUG
+        print("🔍 Searching \(aiRecommendations.count) recommendations in Google Places API:")
+        #endif
+        
+        for (index, recommendationName) in aiRecommendations.enumerated() {
+            #if DEBUG
+            print("  \(index + 1). Searching: \(recommendationName)")
+            #endif
+            
+            do {
+                if let place = try await placeRepository.searchPlace(
+                    name: recommendationName,
+                    near: currentLocation
+                ) {
+                    #if DEBUG
+                    print("    ✅ Found: \(place.name)")
+                    #endif
+                    validPlaces.append(place)
+                } else {
+                    #if DEBUG
+                    print("    ❌ Not found")
+                    #endif
+                }
+            } catch {
+                #if DEBUG
+                print("    ❌ Error: \(error)")
+                #endif
             }
         }
         
@@ -136,12 +157,12 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
     
     private func createGenresFromPlaces(_ places: [Place]) -> [Genre] {
         var genres: [Genre] = []
-        let requiredCategories = GenreCategory.distributeCategories(totalCount: min(places.count, 3))
         
         for (index, place) in places.enumerated() {
             if index >= 3 { break }
             
-            let category = index < requiredCategories.count ? requiredCategories[index] : .other
+            // 実際のスポットの種類に基づいてカテゴリーを決定
+            let category = determineCategoryFromPlaceType(place.genre.googleMapType)
             let genre = Genre(
                 name: mapPlaceTypeToGenreName(place.genre.googleMapType, category: category),
                 category: category,
@@ -151,6 +172,15 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
         }
         
         return genres
+    }
+    
+    private func determineCategoryFromPlaceType(_ googleMapType: String) -> GenreCategory {
+        switch googleMapType {
+        case "restaurant", "cafe", "bar", "meal_takeaway", "bakery":
+            return .restaurant
+        default:
+            return .other
+        }
     }
     
     private func mapPlaceTypeToGenreName(_ googleMapType: String, category: GenreCategory) -> String {
