@@ -51,37 +51,7 @@ class AIRecommendationRepositoryImpl: AIRecommendationRepository {
     }
 }
 
-// MARK: - Extensions for AIRecommendationRequest
 
-extension AIRecommendationRequest {
-    func toPrompt() -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm"
-        dateFormatter.locale = Locale(identifier: "ja_JP")
-        
-        return """
-        現在地: \(currentLocation.latitude), \(currentLocation.longitude)
-        目的地: \(destination.latitude), \(destination.longitude)
-        現在時刻: \(dateFormatter.string(from: currentTime))
-        気分: \(mood.description)
-        移動手段: \(transportMode.displayName)
-        除外スポット: \(excludedPlaceIds.joined(separator: ", "))
-        
-        上記の条件で、経由地として最適な3つのスポットを提案してください。
-        飲食店を30%、それ以外を70%の割合で含めてください。
-        各スポットについて、GooglePlaces APIで検索可能な具体的な店名または施設名を回答してください。
-        
-        回答は以下のJSON形式で提供してください：
-        [
-          {
-            "name": "具体的なスポット名",
-            "category": "restaurant" または "other",
-            "reason": "推薦理由"
-          }
-        ]
-        """
-    }
-}
 
 // MARK: - Helper Extensions
 
