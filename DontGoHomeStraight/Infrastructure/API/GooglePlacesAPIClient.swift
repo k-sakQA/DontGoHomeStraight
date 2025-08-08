@@ -348,40 +348,6 @@ struct GooglePlaceResult: Codable {
         default: return "スポット"
         }
     }
-
-    // 優先度に従いTypesから最も具体的なtypeを選定
-    // 先頭の汎用type(establishment/point_of_interest)に引っ張られないようにする
-    private func choosePreferredType(from types: [String]) -> String {
-        // 優先度: より具体的なものを上位に
-        let priority: [String] = [
-            // 飲食（厳密）
-            "restaurant", "cafe", "bar", "bakery", "meal_takeaway", "meal_delivery",
-            // 観光・屋外
-            "park", "tourist_attraction", "amusement_park", "zoo",
-            // 文化施設
-            "museum", "movie_theater", "library", "book_store",
-            // 商業施設
-            "shopping_mall",
-            // 祈り
-            "place_of_worship",
-            // 生活インフラ
-            "convenience_store", "gas_station", "pharmacy", "hospital", "bank", "atm",
-        ]
-
-        // 優先リストで最初に一致したtypeを返す
-        if let picked = priority.first(where: { types.contains($0) }) {
-            return picked
-        }
-
-        // それ以外は具体的なものを優先して選ぶ（汎用typeを除外）
-        let generic: Set<String> = ["establishment", "point_of_interest"]
-        if let nonGeneric = types.first(where: { generic.contains($0) == false }) {
-            return nonGeneric
-        }
-
-        // 最終手段: 先頭
-        return types.first ?? "establishment"
-    }
 }
 
 struct PlaceGeometry: Codable {
