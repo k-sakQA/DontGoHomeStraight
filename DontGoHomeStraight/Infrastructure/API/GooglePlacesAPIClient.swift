@@ -377,3 +377,138 @@ struct OpeningHours: Codable {
         case openNow = "open_now"
     }
 }
+
+// MARK: - Distance Matrix client
+
+final class GoogleDistanceMatrixClient {
+    private let apiKey: String
+    private let session = URLSession.shared
+    
+    init(apiKey: String) { self.apiKey = apiKey }
+    
+    func getDurationsSeconds(
+        origin: CLLocationCoordinate2D,
+        destinations: [CLLocationCoordinate2D],
+        mode: TransportMode
+    ) async throws -> [TimeInterval] {
+        guard destinations.isEmpty == false else { return [] }
+        let dmBase = "https://maps.googleapis.com/maps/api/distancematrix/json"
+        let destinationsParam = destinations.map { "\($0.latitude),\($0.longitude)" }.joined(separator: "|")
+        
+        func buildURL(modeString: String, addDepartureNow: Bool) -> URL? {
+            #if DEBUG
+            print("🛠️ DM: build URL (mode=\(modeString), addDepartureNow=\(addDepartureNow)) for destinations=")
+            #endif
+            var components = URLComponents(string: dmBase)
+            var queryItems: [URLQueryItem] = [
+                URLQueryItem(name: "origins", value: "\(origin.latitude),\(origin.longitude)"),
+                URLQueryItem(name: "destinations", value: destinationsParam),
+                URLQueryItem(name: "mode", value: modeString),
+                URLQueryItem(name: "language", value: "ja"),
+                URLQueryItem(name: "key", value: apiKey)
+            ]
+            if addDepartureNow {
+                queryItems.append(URLQueryItem(name: "departure_time", value: "now"))
+            }
+            components?.queryItems = queryItems
+            let url = components?.url
+            #if DEBUG
+            if let url = url {
+                print("✅ DM: built URL => \(url.absoluteString)")
+            } else {
+                print("❌ DM: failed to build URL")
+            }
+            #endif
+            return url
+        }
+        
+        func requestDurations(url: URL) async throws -> DistanceMatrixResponse {
+            #if DEBUG
+            print("🌐 Distance Matrix API URL: \(url.absoluteString)")
+            #endif
+            do {
+                let (data, response) = try await session.data(from: url)
+                if let http = response as? HTTPURLResponse {
+                    #if DEBUG
+                    print("📡 DM HTTP status=\(http.statusCode)")
+                    #endif
+                    guard (200...299).contains(http.statusCode) else {
+                        #if DEBUG
+                        if let responseString = String(data: data, encoding: .utf8) {
+                            print("📨 DM Error Body: \(responseString)")
+                        }
+                        #endif
+                        throw PlaceRepositoryError.networkError
+                    }
+                }
+                #if DEBUG
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("🌐 Distance Matrix API Response: \(responseString)")
+                }
+                #endif
+                return try JSONDecoder().decode(DistanceMatrixResponse.self, from: data)
+            } catch {
+                #if DEBUG
+                print("❌ DM request failed: \(error)")
+                #endif
+                throw PlaceRepositoryError.networkError
+            }
+        }
+        
+        // 1st try: requested mode
+        let addDeparture = (mode == .transit)
+        guard let firstURL = buildURL(modeString: mode.googleMapsMode, addDepartureNow: addDeparture) else { throw PlaceRepositoryError.networkError }
+        var dm = try await requestDurations(url: firstURL)
+        var row = dm.rows.first
+        
+        // Fallback if all ZERO_RESULTS/!OK
+        if let r = row, r.elements.allSatisfy({ $0.status != "OK" }) {
+            var fallbackModeString: String? = nil
+            if mode == .transit || mode == .cycling {
+                fallbackModeString = TransportMode.walking.googleMapsMode
+            } else if mode == .walking {
+                fallbackModeString = TransportMode.driving.googleMapsMode
+            }
+            if let fb = fallbackModeString, let fbURL = buildURL(modeString: fb, addDepartureNow: false) {
+                #if DEBUG
+                print("🔁 Distance Matrix fallback with mode=\(fb)")
+                #endif
+                dm = try await requestDurations(url: fbURL)
+                row = dm.rows.first
+            }
+        }
+        
+        guard let finalRow = row else { return Array(repeating: TimeInterval.infinity, count: destinations.count) }
+        return finalRow.elements.map { el in
+            if el.status == "OK", let duration = el.duration {
+                return TimeInterval(duration.value)
+            }
+            #if DEBUG
+            print("⚠️ Distance Matrix element status: \(el.status)")
+            #endif
+            return TimeInterval.infinity
+        }
+    }
+}
+
+private struct DistanceMatrixResponse: Codable {
+    struct Row: Codable { let elements: [Element] }
+    struct Element: Codable {
+        let status: String
+        let duration: Duration?  // オプショナルに変更
+        struct Duration: Codable { let value: Int }
+    }
+    let rows: [Row]
+}
+
+// MARK: - Place Details helper for open_now
+final class GooglePlaceDetailsOpenClient {
+    private let placeRepository: PlaceRepository
+    init(placeRepository: PlaceRepository) { self.placeRepository = placeRepository }
+    func isOpenNow(placeId: String) async throws -> Bool {
+        if let place = try await placeRepository.getPlaceDetails(placeId: placeId) {
+            return place.isOpen ?? true
+        }
+        return true
+    }
+}

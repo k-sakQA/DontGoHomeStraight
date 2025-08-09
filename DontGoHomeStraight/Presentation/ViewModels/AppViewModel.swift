@@ -388,8 +388,15 @@ extension AppViewModel {
 
 // プレビュー用のモック実装
 class MockAIRecommendationRepository: AIRecommendationRepository {
-    func getRecommendations(request: AIRecommendationRequest) async throws -> [String] {
-        return ["スターバックス渋谷店", "代々木公園", "明治神宮"]
+    func getRecommendations(request: AIRecommendationRequest) async throws -> [LLMCandidate] {
+        return [
+            LLMCandidate(name: "スターバックス渋谷店", category: .restaurant),
+            LLMCandidate(name: "代々木公園", category: .other),
+            LLMCandidate(name: "明治神宮", category: .other),
+            LLMCandidate(name: "タリーズコーヒー 新宿南口店", category: .restaurant),
+            LLMCandidate(name: "新宿御苑", category: .other),
+            LLMCandidate(name: "TOHOシネマズ新宿", category: .other)
+        ]
     }
     
     func validateRecommendation(spotName: String, location: CLLocationCoordinate2D) async throws -> Bool {
@@ -422,6 +429,18 @@ class MockPlaceRepository: PlaceRepository {
     
     func validatePlace(name: String, location: CLLocationCoordinate2D) async throws -> Bool {
         return true
+    }
+    
+    func searchPlaces(names: [String], near location: CLLocationCoordinate2D) async throws -> [Place] {
+        return names.compactMap { name in
+            Place(
+                name: name,
+                coordinate: location,
+                address: "東京都渋谷区",
+                genre: Genre(name: "スポット", category: .other, googleMapType: "establishment"),
+                placeId: "mock_\(name.hashValue)"
+            )
+        }
     }
 }
 

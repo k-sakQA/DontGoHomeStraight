@@ -141,7 +141,7 @@ extension PlaceRepositoryImpl {
 extension PlaceRepositoryImpl {
     
     /// 複数のスポット名を並列で検索
-    func searchPlaces(
+    public func searchPlaces(
         names: [String],
         near location: CLLocationCoordinate2D
     ) async throws -> [Place] {

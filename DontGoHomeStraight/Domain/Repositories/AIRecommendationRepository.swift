@@ -2,7 +2,7 @@ import Foundation
 import CoreLocation
 
 protocol AIRecommendationRepository {
-    func getRecommendations(request: AIRecommendationRequest) async throws -> [String]
+    func getRecommendations(request: AIRecommendationRequest) async throws -> [LLMCandidate]
     func validateRecommendation(spotName: String, location: CLLocationCoordinate2D) async throws -> Bool
 }
 
@@ -24,15 +24,37 @@ struct AIRecommendationRequest {
         現在時刻: \(formatter.string(from: currentTime))
         気分: \(mood.description)
         移動手段: \(transportMode.displayName)
-        除外スポット: \(excludedPlaceIds.joined(separator: ", "))
+        除外スポット(place_id): \(excludedPlaceIds.joined(separator: ", "))
         
-        上記の条件で、経由地として最適な3つのスポットを提案してください。
-        飲食店を30%、それ以外を70%の割合で含めてください。
-        各スポットについて、Google Places APIで検索可能な具体的な店名または施設名を回答してください。
+        上記の条件で候補スポットを10件提案してください。各候補は以下のフィールドを含めてください。
+        - name: Googleで実在する具体的名称
+        - category: "restaurant" または "other"
+        
+        回答は厳密にJSON配列で返してください（説明文は不要）。
         """
     }
 }
 
+struct LLMCandidate: Codable, Equatable {
+    let name: String
+    let category: GenreCategory
+}
+
+// Codable bridge for GenreCategory in LLMCandidate
+extension LLMCandidate {
+    private enum CodingKeys: String, CodingKey { case name, category }
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.name = try container.decode(String.self, forKey: .name)
+        let categoryRaw = try container.decode(String.self, forKey: .category)
+        self.category = GenreCategory(rawValue: categoryRaw) ?? .other
+    }
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(category.rawValue, forKey: .category)
+    }
+}
 
 
 enum AIRecommendationError: LocalizedError {
