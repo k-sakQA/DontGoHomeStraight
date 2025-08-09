@@ -430,6 +430,18 @@ class MockPlaceRepository: PlaceRepository {
     func validatePlace(name: String, location: CLLocationCoordinate2D) async throws -> Bool {
         return true
     }
+    
+    func searchPlaces(names: [String], near location: CLLocationCoordinate2D) async throws -> [Place] {
+        return names.compactMap { name in
+            Place(
+                name: name,
+                coordinate: location,
+                address: "東京都渋谷区",
+                genre: Genre(name: "スポット", category: .other, googleMapType: "establishment"),
+                placeId: "mock_\(name.hashValue)"
+            )
+        }
+    }
 }
 
 class MockCacheRepository: CacheRepository {

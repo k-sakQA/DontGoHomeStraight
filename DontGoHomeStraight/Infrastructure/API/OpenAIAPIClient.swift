@@ -18,7 +18,7 @@ class OpenAIAPIClient {
         #endif
         
         let openAIRequest = OpenAIRequest(
-            model: "gpt-4o-mini",
+            model: "gpt-4-turbo",
             messages: [
                 ChatMessage(role: "system", content: systemPrompt),
                 ChatMessage(role: "user", content: request.toPrompt())

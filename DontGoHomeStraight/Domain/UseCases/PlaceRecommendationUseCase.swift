@@ -45,57 +45,102 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
             transportMode: transportMode,
             excludedPlaceIds: excludedPlaceIds
         )
+        #if DEBUG
+        print("🧠 LLM: requesting candidates…")
+        #endif
         let candidates = try await aiRepository.getRecommendations(request: request)
-        if candidates.isEmpty { throw AIRecommendationError.noValidPlaces }
+        #if DEBUG
+        print("🧠 LLM: received \(candidates.count) candidates")
+        #endif
+        if candidates.isEmpty { return [] }
         
         // 3) Places Text Search で place 解決（name -> Place）
+        #if DEBUG
+        print("📍 Places: resolving \(candidates.count) names near currentLocation…")
+        #endif
         let resolvedPlaces = try await placeRepository.searchPlaces(
             names: candidates.map { $0.name },
             near: currentLocation
         )
+        #if DEBUG
+        print("📍 Places: resolved \(resolvedPlaces.count) places")
+        #endif
+        if resolvedPlaces.isEmpty { return [] }
+        
+        // 3.5) 交通手段ごとの距離上限で事前フィルタ
+        let maxRadiusMeters = maxRadiusMeters(for: transportMode)
+        let prefiltered = resolvedPlaces.filter { place in
+            place.distance(from: currentLocation) <= maxRadiusMeters
+        }
+        #if DEBUG
+        print("🧭 Prefilter: within radius(\(Int(maxRadiusMeters))m) = \(prefiltered.count)")
+        #endif
+        if prefiltered.isEmpty { return [] }
         
         // name -> LLMCandidate のマップ
         let nameToCandidate: [String: LLMCandidate] = Dictionary(uniqueKeysWithValues: candidates.map { ($0.name, $0) })
         
         // 4) Distance Matrix で current -> place の所要時間（秒）
+        #if DEBUG
+        print("🕒 DM: requesting durations for \(prefiltered.count) destinations, mode=\(transportMode.rawValue)…")
+        #endif
         let dmClient = GoogleDistanceMatrixClient(apiKey: Environment.googlePlacesAPIKey)
-        let dmInputs = resolvedPlaces.map { $0.coordinate }
+        let dmInputs = prefiltered.map { $0.coordinate }
         let durationsSec = try await dmClient.getDurationsSeconds(
             origin: currentLocation,
             destinations: dmInputs,
             mode: transportMode
         )
+        #if DEBUG
+        print("🕒 DM: received durations count=\(durationsSec.count)")
+        #endif
         
         // 5) 室内は open_now=true（Details）: 必要なものだけ問い合わせ
         let detailsClient = GooglePlaceDetailsOpenClient(placeRepository: placeRepository)
         var openNowMap: [String: Bool] = [:]
-        for place in resolvedPlaces {
+        for place in prefiltered {
             if isIndoor(place: place) {
                 let isOpen = try await detailsClient.isOpenNow(placeId: place.placeId)
                 openNowMap[place.placeId] = isOpen
             }
         }
         
-        // 6) 30分以内、open_now、除外 place_id をフィルタ
-        let maxDuration = 30.0 * 60.0
+        // 6) 30分以内、open_now、除外 place_id をフィルタ（段階的フォールバック付き）
+        let maxDurationLimits = [30.0, 40.0, 50.0, 60.0] // 分単位
         var eligible: [ScoredPlace] = []
-        for (idx, place) in resolvedPlaces.enumerated() {
-            guard idx < durationsSec.count else { continue }
-            let duration = durationsSec[idx]
-            guard duration.isFinite, duration <= maxDuration else { continue }
-            if excludedPlaceIds.contains(place.placeId) { continue }
-            if isIndoor(place: place), let open = openNowMap[place.placeId], open == false { continue }
-            let candidateCategory = nameToCandidate[place.name]?.category ?? place.genre.category
-            eligible.append(ScoredPlace(place: place, candidateCategory: candidateCategory, durationSec: duration))
+        var usedTimeLimit: Double = 30.0
+        
+        for timeLimit in maxDurationLimits {
+            let maxDurationSeconds = timeLimit * 60.0
+            eligible = []
+            
+            for (idx, place) in prefiltered.enumerated() {
+                guard idx < durationsSec.count else { continue }
+                let duration = durationsSec[idx]
+                guard duration.isFinite, duration <= maxDurationSeconds else { continue }
+                if excludedPlaceIds.contains(place.placeId) { continue }
+                if isIndoor(place: place), let open = openNowMap[place.placeId], open == false { continue }
+                let candidateCategory = nameToCandidate[place.name]?.category ?? place.genre.category
+                eligible.append(ScoredPlace(place: place, candidateCategory: candidateCategory, durationSec: duration))
+            }
+            
+            #if DEBUG
+            print("✅ Filter: eligible=\(eligible.count) within \(Int(timeLimit))min")
+            #endif
+            
+            if !eligible.isEmpty {
+                usedTimeLimit = timeLimit
+                break
+            }
         }
         
-        if eligible.isEmpty { throw AIRecommendationError.noValidPlaces }
+        if eligible.isEmpty { return [] }
         
         // 7) スコアリング
         let scored = scorePlaces(eligible: eligible, primaryRoute: nil)
             .sorted { $0.score > $1.score }
         
-        // 8) 30/70構成を強制: まず restaurant から1、次に other から2、足りなければ補完
+        // 8) 30/70構成を強制
         let restaurants = scored.filter { $0.candidateCategory == .restaurant }
         let others = scored.filter { $0.candidateCategory == .other }
         
@@ -103,28 +148,53 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
         if let topRestaurant = restaurants.first { picked.append(topRestaurant) }
         for s in others { if picked.count < 3 { picked.append(s) } }
         if picked.count < 3 {
-            // 補完
             for s in restaurants { if picked.contains(where: { $0.place.placeId == s.place.placeId }) == false && picked.count < 3 { picked.append(s) } }
         }
         
         let finalThree = Array(picked.prefix(3))
-        if finalThree.isEmpty { throw AIRecommendationError.noValidPlaces }
+        if finalThree.isEmpty { return [] }
         
-        // 9) ジャンルを返す（常に3件に切り詰め）
+        // 9) ジャンルを返す（時間注記付き）
         let genres = finalThree.map { sp -> Genre in
             let category = determineCategoryFromPlaceType(sp.place.genre.googleMapType)
+            var displayName = mapPlaceTypeToGenreName(sp.place.genre.googleMapType, category: category)
+            
+            // 30分超過時は注記を追加
+            if usedTimeLimit > 30.0 {
+                displayName += " (通常より時間がかかります)"
+            }
+            
             return Genre(
-                name: mapPlaceTypeToGenreName(sp.place.genre.googleMapType, category: category),
+                name: displayName,
                 category: category,
                 googleMapType: sp.place.genre.googleMapType
             )
         }
         
-        // キャッシュへ保存と除外
+        #if DEBUG
+        if usedTimeLimit > 30.0 {
+            print("⚠️ Time fallback: used \(Int(usedTimeLimit))min limit")
+        }
+        #endif
+        
+        // キャッシュ保存と除外
         await cacheRepository.savePlacesForGenres(places: finalThree.map { $0.place }, genres: genres)
         for sp in finalThree { await cacheRepository.addExcludedPlaceId(sp.place.placeId) }
         
         return genres
+    }
+    
+    private func maxRadiusMeters(for mode: TransportMode) -> CLLocationDistance {
+        switch mode {
+        case .walking:
+            return 2_000
+        case .cycling:
+            return 5_000
+        case .driving:
+            return 20_000
+        case .transit:
+            return 10_000
+        }
     }
     
     private func determineCategoryFromPlaceType(_ googleMapType: String) -> GenreCategory {
