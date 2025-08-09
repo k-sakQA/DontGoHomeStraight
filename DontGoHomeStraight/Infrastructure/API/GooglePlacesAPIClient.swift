@@ -377,3 +377,54 @@ struct OpeningHours: Codable {
         case openNow = "open_now"
     }
 }
+
+// MARK: - Distance Matrix client
+
+final class GoogleDistanceMatrixClient {
+    private let apiKey: String
+    private let session = URLSession.shared
+    
+    init(apiKey: String) { self.apiKey = apiKey }
+    
+    func getDurationsSeconds(
+        origin: CLLocationCoordinate2D,
+        destinations: [CLLocationCoordinate2D],
+        mode: TransportMode
+    ) async throws -> [TimeInterval] {
+        guard destinations.isEmpty == false else { return [] }
+        let dmBase = "https://maps.googleapis.com/maps/api/distancematrix/json"
+        let destinationsParam = destinations.map { "\($0.latitude),\($0.longitude)" }.joined(separator: "|")
+        let urlString = "\(dmBase)?origins=\(origin.latitude),\(origin.longitude)&destinations=\(destinationsParam)&mode=\(mode.googleMapsMode)&language=ja&key=\(apiKey)"
+        guard let url = URL(string: urlString) else { throw PlaceRepositoryError.networkError }
+        let (data, response) = try await session.data(from: url)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { throw PlaceRepositoryError.networkError }
+        let dm = try JSONDecoder().decode(DistanceMatrixResponse.self, from: data)
+        guard let row = dm.rows.first else { return Array(repeating: TimeInterval.infinity, count: destinations.count) }
+        return row.elements.map { el in
+            if el.status == "OK" { return TimeInterval(el.duration.value) }
+            return TimeInterval.infinity
+        }
+    }
+}
+
+private struct DistanceMatrixResponse: Codable {
+    struct Row: Codable { let elements: [Element] }
+    struct Element: Codable {
+        let status: String
+        let duration: Duration
+        struct Duration: Codable { let value: Int }
+    }
+    let rows: [Row]
+}
+
+// MARK: - Place Details helper for open_now
+final class GooglePlaceDetailsOpenClient {
+    private let placeRepository: PlaceRepository
+    init(placeRepository: PlaceRepository) { self.placeRepository = placeRepository }
+    func isOpenNow(placeId: String) async throws -> Bool {
+        if let place = try await placeRepository.getPlaceDetails(placeId: placeId) {
+            return place.isOpen ?? true
+        }
+        return true
+    }
+}

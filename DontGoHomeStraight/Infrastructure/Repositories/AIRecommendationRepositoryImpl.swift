@@ -8,13 +8,10 @@ class AIRecommendationRepositoryImpl: AIRecommendationRepository {
         self.openAIClient = apiClient
     }
     
-    func getRecommendations(request: AIRecommendationRequest) async throws -> [String] {
+    func getRecommendations(request: AIRecommendationRequest) async throws -> [LLMCandidate] {
         do {
-            let recommendations = try await openAIClient.getRecommendations(request: request)
-            
-            // 最大3件までに制限
-            return Array(recommendations.prefix(3))
-            
+            let candidates = try await openAIClient.getRecommendations(request: request)
+            return candidates
         } catch let error as AIRecommendationError {
             throw error
         } catch {

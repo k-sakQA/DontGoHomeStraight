@@ -7,6 +7,8 @@ protocol PlaceRepository {
     func getNearbyPlaces(location: CLLocationCoordinate2D, radius: Int) async throws -> [Place]
     func getPlaceDetails(placeId: String) async throws -> Place?
     func validatePlace(name: String, location: CLLocationCoordinate2D) async throws -> Bool
+    // Batch Text Search by names
+    func searchPlaces(names: [String], near location: CLLocationCoordinate2D) async throws -> [Place]
 }
 
 enum PlaceRepositoryError: LocalizedError {

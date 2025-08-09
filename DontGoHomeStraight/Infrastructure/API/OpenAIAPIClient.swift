@@ -10,7 +10,7 @@ class OpenAIAPIClient {
         self.apiKey = apiKey
     }
     
-    func getRecommendations(request: AIRecommendationRequest) async throws -> [String] {
+    func getRecommendations(request: AIRecommendationRequest) async throws -> [LLMCandidate] {
         #if DEBUG
         print("🤖 OpenAI API Call Start")
         print("📝 API Key: \(String(apiKey.prefix(10)))...")
@@ -18,13 +18,13 @@ class OpenAIAPIClient {
         #endif
         
         let openAIRequest = OpenAIRequest(
-            model: "gpt-4",
+            model: "gpt-4o-mini",
             messages: [
                 ChatMessage(role: "system", content: systemPrompt),
                 ChatMessage(role: "user", content: request.toPrompt())
             ],
-            maxTokens: 1000,
-            temperature: 0.7
+            maxTokens: 800,
+            temperature: 0.2
         )
         
         var urlRequest = URLRequest(url: baseURL)
@@ -85,7 +85,7 @@ class OpenAIAPIClient {
         }
     }
     
-    private func parseRecommendations(from response: OpenAIResponse) throws -> [String] {
+    private func parseRecommendations(from response: OpenAIResponse) throws -> [LLMCandidate] {
         guard let choice = response.choices.first,
               let content = choice.message.content else {
             throw AIRecommendationError.invalidResponse
@@ -95,85 +95,33 @@ class OpenAIAPIClient {
         print("🔍 Parsing content: \(content)")
         #endif
         
-        // JSONレスポンスをパース
+        // Expect pure JSON array of {name, category}
+        guard let jsonData = content.data(using: .utf8) else {
+            throw AIRecommendationError.invalidResponse
+        }
         do {
-            let jsonData = content.data(using: .utf8) ?? Data()
-            let recommendations = try JSONDecoder().decode([AIRecommendationResponse].self, from: jsonData)
-            
-            #if DEBUG
-            print("✅ JSON Parse Success - \(recommendations.count) items:")
-            for (index, rec) in recommendations.enumerated() {
-                print("  \(index + 1). \(rec.name) (\(rec.category))")
-            }
-            #endif
-            
-            return recommendations.map { $0.name }
+            let candidates = try JSONDecoder().decode([LLMCandidate].self, from: jsonData)
+            return candidates
         } catch {
-            #if DEBUG
-            print("❌ JSON Parse Failed: \(error)")
-            print("Trying fallback parsing...")
-            #endif
-            // フォールバック: シンプルな文字列解析
-            let lines = content.components(separatedBy: .newlines)
-            let spotNames = lines.compactMap { line -> String? in
-                // "1. スポット名" のような形式を想定
-                let trimmed = line.trimmingCharacters(in: .whitespaces)
-                if trimmed.contains(".") {
-                    let components = trimmed.components(separatedBy: ".")
-                    if components.count > 1 {
-                        return components[1].trimmingCharacters(in: .whitespaces)
-                    }
-                }
-                return nil
+            // Fallback: attempt to extract JSON substring
+            if let start = content.firstIndex(of: "[") , let end = content.lastIndex(of: "]") {
+                let jsonSubstring = String(content[start...end])
+                let data = Data(jsonSubstring.utf8)
+                let candidates = try JSONDecoder().decode([LLMCandidate].self, from: data)
+                return candidates
             }
-            
-            if spotNames.isEmpty {
-                throw AIRecommendationError.invalidResponse
-            }
-            
-            return Array(spotNames.prefix(3))
+            throw AIRecommendationError.invalidResponse
         }
     }
     
     private var systemPrompt: String {
         return """
-        あなたは日本国内の寄り道スポット提案の専門家です。
-
-        【タスク】
-        ユーザーの現在地から目的地へ向かうルート上、またはルートから少し迂回した場所で、
-        移動時間が現在地から30分以内で行ける実在のスポットを3つ提案してください。
-
-        【重要な制約】
-        1. 飲食店を1件（30%）、それ以外を2件（70%）必ず含めること
-        2. 現在地→目的地のルート上、またはルートから30分以内で行けるスポットに限定
-        3. 除外リストに含まれるスポットは絶対に提案しない
-        4. ユーザーの気分と移動手段を考慮する
-        5. Google Places APIで検索可能な具体的な店名・施設名にする
-        6. 室内施設の場合は営業時間中のものだけにする
-        7. 提案理由に「寄り道時間内に行ける」ことを明記する
-
-        【回答形式】
-        以下のJSON形式で厳密に回答してください：
-        [
-          {
-            "name": "具体的なスポット名",
-            "category": "restaurant",
-            "reason": "推薦理由（寄り道時間内で行けることを含める）"
-          },
-          {
-            "name": "具体的なスポット名",
-            "category": "other",
-            "reason": "推薦理由（寄り道時間内で行けることを含める）"
-          },
-          {
-            "name": "具体的なスポット名",
-            "category": "other",
-            "reason": "推薦理由（寄り道時間内で行けることを含める）"
-          }
-        ]
-        ※categoryは"restaurant"または"other"のみ
-        ※必ず3件提案する
-        ※nameは実在する具体的な店名・施設名にする
+        あなたはルート寄り道スポット選定のアシスタントです。以下を厳守してください。
+        - 10件の候補を返す
+        - 各候補は {"name": string, "category": "restaurant"|"other"} のみ
+        - 説明文やコードブロックを含めない
+        - JSON配列のみを返す
+        - 除外リストの place_id と一致するスポットは出さない（name重複も避ける）
         """
     }
 }
@@ -214,10 +162,4 @@ struct OpenAIResponse: Codable {
         let role: String
         let content: String?
     }
-}
-
-struct AIRecommendationResponse: Codable {
-    let name: String
-    let category: String
-    let reason: String
 }

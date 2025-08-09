@@ -33,10 +33,10 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
         mood: Mood,
         transportMode: TransportMode
     ) async throws -> [Genre] {
-        // 1. キャッシュから除外リストを取得
+        // 1) 除外リスト
         let excludedPlaceIds = await cacheRepository.getExcludedPlaceIds()
         
-        // 2. OpenAI APIで推薦を取得
+        // 2) OpenAIから候補（10件）
         let request = AIRecommendationRequest(
             currentLocation: currentLocation,
             destination: destination,
@@ -45,133 +45,84 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
             transportMode: transportMode,
             excludedPlaceIds: excludedPlaceIds
         )
+        let candidates = try await aiRepository.getRecommendations(request: request)
+        if candidates.isEmpty { throw AIRecommendationError.noValidPlaces }
         
-        let aiRecommendations = try await aiRepository.getRecommendations(request: request)
+        // 3) Places Text Search で place 解決（name -> Place）
+        let resolvedPlaces = try await placeRepository.searchPlaces(
+            names: candidates.map { $0.name },
+            near: currentLocation
+        )
         
-        // 3. Google Places APIで実在性を確認し、有効なスポットを取得
-        var validPlaces: [Place] = []
+        // name -> LLMCandidate のマップ
+        let nameToCandidate: [String: LLMCandidate] = Dictionary(uniqueKeysWithValues: candidates.map { ($0.name, $0) })
         
-        #if DEBUG
-        print("🔍 Searching \(aiRecommendations.count) recommendations in Google Places API:")
-        #endif
+        // 4) Distance Matrix で current -> place の所要時間（秒）
+        let dmClient = GoogleDistanceMatrixClient(apiKey: Environment.googlePlacesAPIKey)
+        let dmInputs = resolvedPlaces.map { $0.coordinate }
+        let durationsSec = try await dmClient.getDurationsSeconds(
+            origin: currentLocation,
+            destinations: dmInputs,
+            mode: transportMode
+        )
         
-        for (index, recommendationName) in aiRecommendations.enumerated() {
-            #if DEBUG
-            print("  \(index + 1). Searching: \(recommendationName)")
-            #endif
-            
-            do {
-                if let place = try await placeRepository.searchPlace(
-                    name: recommendationName,
-                    near: currentLocation
-                ) {
-                    #if DEBUG
-                    print("    ✅ Found: \(place.name)")
-                    #endif
-                    validPlaces.append(place)
-                } else {
-                    #if DEBUG
-                    print("    ❌ Not found")
-                    #endif
-                }
-            } catch {
-                #if DEBUG
-                print("    ❌ Error: \(error)")
-                #endif
+        // 5) 室内は open_now=true（Details）: 必要なものだけ問い合わせ
+        let detailsClient = GooglePlaceDetailsOpenClient(placeRepository: placeRepository)
+        var openNowMap: [String: Bool] = [:]
+        for place in resolvedPlaces {
+            if isIndoor(place: place) {
+                let isOpen = try await detailsClient.isOpenNow(placeId: place.placeId)
+                openNowMap[place.placeId] = isOpen
             }
         }
         
-        // 4. 3件に満たない場合は追加検索
-        if validPlaces.count < 3 {
-            let additionalPlaces = try await searchAdditionalPlaces(
-                location: currentLocation,
-                mood: mood,
-                needed: 3 - validPlaces.count,
-                excludeIds: validPlaces.map { $0.placeId }
-            )
-            validPlaces.append(contentsOf: additionalPlaces)
+        // 6) 30分以内、open_now、除外 place_id をフィルタ
+        let maxDuration = 30.0 * 60.0
+        var eligible: [ScoredPlace] = []
+        for (idx, place) in resolvedPlaces.enumerated() {
+            guard idx < durationsSec.count else { continue }
+            let duration = durationsSec[idx]
+            guard duration.isFinite, duration <= maxDuration else { continue }
+            if excludedPlaceIds.contains(place.placeId) { continue }
+            if isIndoor(place: place), let open = openNowMap[place.placeId], open == false { continue }
+            let candidateCategory = nameToCandidate[place.name]?.category ?? place.genre.category
+            eligible.append(ScoredPlace(place: place, candidateCategory: candidateCategory, durationSec: duration))
         }
         
-        // 5. 候補なしの場合
-        if validPlaces.isEmpty {
-            throw AIRecommendationError.noValidPlaces
+        if eligible.isEmpty { throw AIRecommendationError.noValidPlaces }
+        
+        // 7) スコアリング
+        let scored = scorePlaces(eligible: eligible, primaryRoute: nil)
+            .sorted { $0.score > $1.score }
+        
+        // 8) 30/70構成を強制: まず restaurant から1、次に other から2、足りなければ補完
+        let restaurants = scored.filter { $0.candidateCategory == .restaurant }
+        let others = scored.filter { $0.candidateCategory == .other }
+        
+        var picked: [ScoredPlace] = []
+        if let topRestaurant = restaurants.first { picked.append(topRestaurant) }
+        for s in others { if picked.count < 3 { picked.append(s) } }
+        if picked.count < 3 {
+            // 補完
+            for s in restaurants { if picked.contains(where: { $0.place.placeId == s.place.placeId }) == false && picked.count < 3 { picked.append(s) } }
         }
         
-        // 6. ジャンル情報のみ返却（スポット名は隠匿）
-        let genres = createGenresFromPlaces(validPlaces)
+        let finalThree = Array(picked.prefix(3))
+        if finalThree.isEmpty { throw AIRecommendationError.noValidPlaces }
         
-        // 7. 提案したスポットをキャッシュに保存（ジャンルとの関連付け）
-        await cacheRepository.savePlacesForGenres(places: validPlaces, genres: genres)
-        
-        // 8. 除外リストに追加
-        for place in validPlaces {
-            await cacheRepository.addExcludedPlaceId(place.placeId)
-        }
-        
-        return Array(genres.prefix(3))
-    }
-    
-    private func searchAdditionalPlaces(
-        location: CLLocationCoordinate2D,
-        mood: Mood,
-        needed: Int,
-        excludeIds: [String]
-    ) async throws -> [Place] {
-        // 気分に基づいてスポットタイプを決定
-        let types = getSearchTypesForMood(mood)
-        var additionalPlaces: [Place] = []
-        
-        for type in types {
-            if additionalPlaces.count >= needed { break }
-            
-            let places = try await placeRepository.searchPlaces(
-                location: location,
-                type: type,
-                radius: 3000
-            )
-            
-            let filteredPlaces = places.filter { place in
-                !excludeIds.contains(place.placeId)
-            }
-            
-            additionalPlaces.append(contentsOf: filteredPlaces)
-        }
-        
-        return Array(additionalPlaces.prefix(needed))
-    }
-    
-    private func getSearchTypesForMood(_ mood: Mood) -> [String] {
-        switch (mood.activityType, mood.vibeType) {
-        case (.indoor, .jazzy):
-            return ["cafe", "bar", "library", "museum"]
-        case (.indoor, .discovery):
-            return ["museum", "book_store", "art_gallery", "library"]
-        case (.indoor, .exciting):
-            return ["shopping_mall", "movie_theater", "amusement_center"]
-        case (.outdoor, .jazzy):
-            return ["park", "cafe", "tourist_attraction"]
-        case (.outdoor, .discovery):
-            return ["tourist_attraction", "park", "cemetery", "zoo"]
-        case (.outdoor, .exciting):
-            return ["amusement_park", "park", "stadium", "tourist_attraction"]
-        }
-    }
-    
-    private func createGenresFromPlaces(_ places: [Place]) -> [Genre] {
-        var genres: [Genre] = []
-        
-        for (index, place) in places.enumerated() {
-            if index >= 3 { break }
-            
-            // 実際のスポットの種類に基づいてカテゴリーを決定
-            let category = determineCategoryFromPlaceType(place.genre.googleMapType)
-            let genre = Genre(
-                name: mapPlaceTypeToGenreName(place.genre.googleMapType, category: category),
+        // 9) ジャンルを返す（常に3件に切り詰め）
+        let genres = finalThree.map { sp -> Genre in
+            let category = determineCategoryFromPlaceType(sp.place.genre.googleMapType)
+            return Genre(
+                name: mapPlaceTypeToGenreName(sp.place.genre.googleMapType, category: category),
                 category: category,
-                googleMapType: place.genre.googleMapType
+                googleMapType: sp.place.genre.googleMapType
             )
-            genres.append(genre)
         }
+        
+        // キャッシュへ保存と除外
+        await cacheRepository.savePlacesForGenres(places: finalThree.map { $0.place }, genres: genres)
+        for sp in finalThree { await cacheRepository.addExcludedPlaceId(sp.place.placeId) }
         
         return genres
     }
@@ -186,7 +137,6 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
     }
     
     private func mapPlaceTypeToGenreName(_ googleMapType: String, category: GenreCategory) -> String {
-        // Google Places APIのタイプから日本語ジャンル名にマッピング
         switch googleMapType {
         case "restaurant": return "レストラン"
         case "cafe": return "カフェ"
@@ -210,5 +160,58 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
     
     func clearCache() async throws {
         await cacheRepository.clearCache()
+    }
+}
+
+// MARK: - Scoring and helpers
+
+private struct ScoredPlace: Hashable {
+    let place: Place
+    let candidateCategory: GenreCategory
+    let durationSec: TimeInterval
+    var score: Double = 0
+}
+
+private extension PlaceRecommendationUseCaseImpl {
+    func isIndoor(place: Place) -> Bool {
+        // 室内が想定される type 群
+        let indoorTypes: Set<String> = [
+            "restaurant", "cafe", "bar", "bakery", "shopping_mall", "movie_theater",
+            "museum", "library", "book_store"
+        ]
+        return indoorTypes.contains(place.genre.googleMapType)
+    }
+    
+    func scorePlaces(eligible: [ScoredPlace], primaryRoute: String?) -> [ScoredPlace] {
+        // 重み
+        let weightDuration = 1.0
+        let weightOnRoute = 3.0
+        let weightRating = 0.5
+        let weightDiversity = 0.5
+        
+        // ここでは on-route 判定はスキップ（必要なら Directions overview_polyline 近傍判定に置換）
+        func onRouteBonus(for _: Place) -> Double { return 0 }
+        
+        // チェーン・近接の簡易ペナルティ（同名開始 or 300m以内）
+        func diversityPenalty(for place: Place, picked: [ScoredPlace]) -> Double {
+            for p in picked {
+                if p.place.name.split(separator: " ").first == place.name.split(separator: " ").first { return 0.5 }
+                let d = p.place.distance(from: place.coordinate)
+                if d < 300 { return 0.5 }
+            }
+            return 0
+        }
+        
+        var out: [ScoredPlace] = []
+        for var sp in eligible {
+            let durationComponent = -weightDuration * (sp.durationSec / 60.0)
+            let onRouteComponent = weightOnRoute * onRouteBonus(for: sp.place)
+            let ratingValue = sp.place.rating ?? 0
+            let ratingComponent = weightRating * ratingValue
+            let penalty = weightDiversity * diversityPenalty(for: sp.place, picked: out)
+            sp.score = durationComponent + onRouteComponent + ratingComponent - penalty
+            out.append(sp)
+        }
+        return out
     }
 }
