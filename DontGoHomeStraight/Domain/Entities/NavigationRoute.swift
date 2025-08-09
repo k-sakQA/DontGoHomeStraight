@@ -79,14 +79,15 @@ extension NavigationRoute {
 extension NavigationRoute {
     var googleMapsURL: URL? {
         // Google Mapsアプリで経路案内を開始するURL
+        // 経由地を含む場合は daddr に "経由地+to:最終目的地" の形式で指定
         let waypointQuery = "\(waypoint.coordinate.latitude),\(waypoint.coordinate.longitude)"
         let destinationQuery = "\(destination.latitude),\(destination.longitude)"
+        let combinedDestination = "\(waypointQuery)+to:\(destinationQuery)"
         
         var components = URLComponents(string: "comgooglemaps://")
         components?.queryItems = [
             URLQueryItem(name: "saddr", value: "\(origin.latitude),\(origin.longitude)"),
-            URLQueryItem(name: "daddr", value: destinationQuery),
-            URLQueryItem(name: "waypoints", value: waypointQuery),
+            URLQueryItem(name: "daddr", value: combinedDestination),
             URLQueryItem(name: "directionsmode", value: transportMode.googleMapsMode)
         ]
         
@@ -95,13 +96,15 @@ extension NavigationRoute {
     
     var appleMapsURL: URL? {
         // Apple Mapsアプリでの経路案内URL（フォールバック用）
+        // 経由地を含む場合は daddr に "経由地+to:最終目的地" の形式で指定
         let waypointQuery = "\(waypoint.coordinate.latitude),\(waypoint.coordinate.longitude)"
         let destinationQuery = "\(destination.latitude),\(destination.longitude)"
+        let combinedDestination = "\(waypointQuery)+to:\(destinationQuery)"
         
         var components = URLComponents(string: "http://maps.apple.com/")
         components?.queryItems = [
             URLQueryItem(name: "saddr", value: "\(origin.latitude),\(origin.longitude)"),
-            URLQueryItem(name: "daddr", value: "\(waypointQuery)+to:\(destinationQuery)"),
+            URLQueryItem(name: "daddr", value: combinedDestination),
             URLQueryItem(name: "dirflg", value: transportMode.appleMapsMode)
         ]
         

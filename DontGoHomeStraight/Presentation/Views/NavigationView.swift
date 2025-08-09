@@ -286,13 +286,15 @@ struct NavigationView: View {
     }
     
     private func openGoogleMaps() {
-        guard let route = viewModel.currentRoute else { return }
+        guard let route = viewModel.currentRoute,
+              let finalDestination = viewModel.destination else { return }
         
         Task {
             do {
+                // 経由地経由で最終目的地に向かうナビゲーション
                 _ = try await viewModel.startNavigationWithRoute(
                     origin: route.origin,
-                    destination: route.destination,
+                    destination: finalDestination.coordinate,  // 最終目的地を指定
                     selectedGenre: viewModel.selectedGenre!,
                     transportMode: route.transportMode
                 )
