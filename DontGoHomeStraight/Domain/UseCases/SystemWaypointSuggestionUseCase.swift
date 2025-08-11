@@ -91,7 +91,7 @@ final class SystemWaypointSuggestionUseCase {
     ) async throws -> [Place] {
         // Sample along straight-line corridor
         let points = corridorSamplePoints(origin: current, destination: destination)
-        let types = PlaceRepositoryImpl().getRecommendedTypes(for: mood) // leverage helper via known mapping
+        let types = typesForMood(mood)
         var aggregated: [Place] = []
         for p in points {
             for type in types {
@@ -117,6 +117,23 @@ final class SystemWaypointSuggestionUseCase {
             )
         }
         return [0.25, 0.5, 0.75].map { interp($0) }
+    }
+    
+    private func typesForMood(_ mood: Mood) -> [String] {
+        switch (mood.activityType, mood.vibeType) {
+        case (.indoor, .jazzy):
+            return ["cafe", "bar", "museum", "art_gallery", "library"]
+        case (.indoor, .discovery):
+            return ["museum", "library", "book_store", "art_gallery", "aquarium"]
+        case (.indoor, .exciting):
+            return ["shopping_mall", "movie_theater", "amusement_center", "game_center"]
+        case (.outdoor, .jazzy):
+            return ["park", "garden", "scenic_viewpoint", "cafe", "tourist_attraction"]
+        case (.outdoor, .discovery):
+            return ["tourist_attraction", "park", "historical_site", "zoo", "botanical_garden"]
+        case (.outdoor, .exciting):
+            return ["amusement_park", "adventure_park", "sports_complex", "beach", "hiking_area"]
+        }
     }
     
     private struct ScoredCandidate: Hashable {
