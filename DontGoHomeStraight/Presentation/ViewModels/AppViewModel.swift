@@ -32,6 +32,7 @@ class AppViewModel: ObservableObject {
     private let placeRecommendationUseCase: PlaceRecommendationUseCase
     private let navigationUseCase: NavigationUseCase
     private let locationRepository: LocationRepository
+    private let systemWaypointSuggestionUseCase: SystemWaypointSuggestionUseCase?
     
     // MARK: - Private Properties
     
@@ -42,11 +43,13 @@ class AppViewModel: ObservableObject {
     init(
         placeRecommendationUseCase: PlaceRecommendationUseCase,
         navigationUseCase: NavigationUseCase,
-        locationRepository: LocationRepository
+        locationRepository: LocationRepository,
+        systemWaypointSuggestionUseCase: SystemWaypointSuggestionUseCase? = nil
     ) {
         self.placeRecommendationUseCase = placeRecommendationUseCase
         self.navigationUseCase = navigationUseCase
         self.locationRepository = locationRepository
+        self.systemWaypointSuggestionUseCase = systemWaypointSuggestionUseCase
         
         setupLocationObserver()
         setupArrivalNotification()
@@ -229,12 +232,25 @@ class AppViewModel: ObservableObject {
         isLoading = true
         
         do {
-            let genres = try await placeRecommendationUseCase.getRecommendations(
-                currentLocation: currentLocation,
-                destination: destination.coordinate,
-                mood: mood,
-                transportMode: transportMode
-            )
+            let genres: [Genre]
+            if FeatureFlags.detourSystemPicker, let sys = systemWaypointSuggestionUseCase {
+                #if DEBUG
+                print("🛠️ detour.system_picker=ON: using SystemWaypointSuggestionUseCase")
+                #endif
+                genres = try await sys.getRecommendations(
+                    currentLocation: currentLocation,
+                    destination: destination.coordinate,
+                    mood: mood,
+                    transportMode: transportMode
+                )
+            } else {
+                genres = try await placeRecommendationUseCase.getRecommendations(
+                    currentLocation: currentLocation,
+                    destination: destination.coordinate,
+                    mood: mood,
+                    transportMode: transportMode
+                )
+            }
             
             #if DEBUG
             print("📋 Received Genres: \(genres.count) items")

@@ -13,6 +13,7 @@ struct Place: Codable {
     let isOpen: Bool?
     let placeId: String
     let vicinity: String?
+    let userRatingsTotal: Int?
     
     init(
         id: String = UUID().uuidString,
@@ -25,7 +26,8 @@ struct Place: Codable {
         photoReference: String? = nil,
         isOpen: Bool? = nil,
         placeId: String,
-        vicinity: String? = nil
+        vicinity: String? = nil,
+        userRatingsTotal: Int? = nil
     ) {
         self.id = id
         self.name = name
@@ -38,6 +40,7 @@ struct Place: Codable {
         self.isOpen = isOpen
         self.placeId = placeId
         self.vicinity = vicinity
+        self.userRatingsTotal = userRatingsTotal
     }
 }
 
@@ -60,6 +63,11 @@ extension Place {
     var displayRating: String {
         guard let rating = rating else { return "評価なし" }
         return String(format: "★%.1f", rating)
+    }
+    
+    var displayReviews: String {
+        guard let reviews = userRatingsTotal else { return "" }
+        return "(" + String(reviews) + ")"
     }
     
     var displayPriceLevel: String {

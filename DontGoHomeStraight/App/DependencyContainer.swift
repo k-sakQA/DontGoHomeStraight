@@ -55,6 +55,15 @@ class DependencyContainer {
         )
     }()
     
+    private lazy var systemWaypointSuggestionUseCase: SystemWaypointSuggestionUseCase = {
+        let dm = DistanceMatrixAdapter(apiKey: Environment.googlePlacesAPIKey)
+        return SystemWaypointSuggestionUseCase(
+            placeRepository: placeRepository,
+            distanceMatrixClient: dm,
+            cacheRepository: cacheRepository
+        )
+    }()
+    
     private lazy var navigationUseCase: NavigationUseCase = {
         return NavigationUseCaseImpl(
             cacheRepository: cacheRepository,
@@ -93,7 +102,8 @@ class DependencyContainer {
         return AppViewModel(
             placeRecommendationUseCase: placeRecommendationUseCase,
             navigationUseCase: navigationUseCase,
-            locationRepository: locationRepository
+            locationRepository: locationRepository,
+            systemWaypointSuggestionUseCase: systemWaypointSuggestionUseCase
         )
     }()
     

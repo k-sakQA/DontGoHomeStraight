@@ -167,7 +167,7 @@ class GooglePlacesAPIClient {
     }
     
     func getPlaceDetails(placeId: String) async throws -> Place? {
-        let fields = "name,formatted_address,geometry,types,rating,price_level,photos,opening_hours"
+        let fields = "name,formatted_address,geometry,types,rating,user_ratings_total,price_level,photos,opening_hours"
         let urlString = "\(baseURL)/details/json?place_id=\(placeId)&fields=\(fields)&key=\(apiKey)"
         
         guard let url = URL(string: urlString) else {
@@ -237,6 +237,7 @@ struct GooglePlaceResult: Codable {
     let photos: [PlacePhoto]?
     let openingHours: OpeningHours?
     let vicinity: String?
+    let userRatingsTotal: Int?
     
     private enum CodingKeys: String, CodingKey {
         case placeId = "place_id"
@@ -246,26 +247,28 @@ struct GooglePlaceResult: Codable {
         case priceLevel = "price_level"
         case photos
         case openingHours = "opening_hours"
+        case userRatingsTotal = "user_ratings_total"
     }
     
-    func toPlace() -> Place? {
+    func toPlace() -> Place?
         let genre = determineGenre(from: types)
         
-        return Place(
-            name: name,
-            coordinate: CLLocationCoordinate2D(
-                latitude: geometry.location.lat,
-                longitude: geometry.location.lng
-            ),
-            address: formattedAddress ?? vicinity ?? "",
-            genre: genre,
-            rating: rating,
-            priceLevel: priceLevel,
-            photoReference: photos?.first?.photoReference,
-            isOpen: openingHours?.openNow,
-            placeId: placeId,
-            vicinity: vicinity
-        )
+                    return Place(
+                name: name,
+                coordinate: CLLocationCoordinate2D(
+                    latitude: geometry.location.lat,
+                    longitude: geometry.location.lng
+                ),
+                address: formattedAddress ?? vicinity ?? "",
+                genre: genre,
+                rating: rating,
+                priceLevel: priceLevel,
+                photoReference: photos?.first?.photoReference,
+                isOpen: openingHours?.openNow,
+                placeId: placeId,
+                vicinity: vicinity,
+                userRatingsTotal: userRatingsTotal
+            )
     }
     
     private func determineGenre(from types: [String]?) -> Genre {
