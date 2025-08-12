@@ -1,3 +1,4 @@
+// #if canImport(XCTest)
 import XCTest
 @testable import DontGoHomeStraight
 
@@ -205,3 +206,4 @@ final class GenreTests: XCTestCase {
         XCTAssertEqual(originalGenre.googleMapType, decodedGenre.googleMapType)
     }
 }
+// #endif

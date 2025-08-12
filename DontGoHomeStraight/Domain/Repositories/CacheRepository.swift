@@ -1,7 +1,10 @@
 import Foundation
 
 protocol CacheRepository {
+    /// 推薦結果の一時保存（メモリのみ）。永続化はユーザー選択時に行う。
     func savePlacesForGenres(places: [Place], genres: [Genre]) async
+    /// ユーザーが選択した行き先のみを永続保存する
+    func saveSelectedPlaceForGenre(place: Place, genre: Genre) async
     func getPlaceForGenre(genre: Genre) async -> Place?
     func saveExcludedPlaceIds(_ placeIds: [String]) async
     func getExcludedPlaceIds() async -> [String]

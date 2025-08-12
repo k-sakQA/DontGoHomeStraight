@@ -1,3 +1,4 @@
+// #if canImport(XCTest)
 import XCTest
 @testable import DontGoHomeStraight
 
@@ -99,3 +100,4 @@ final class MoodTests: XCTestCase {
         XCTAssertEqual(originalMood, decodedMood)
     }
 }
+// #endif
