@@ -252,7 +252,7 @@ struct ExtendedHomeView: View {
                     LazyVStack(spacing: 12) {
                         AppFeatureView(
                             icon: "brain.head.profile",
-                            title: "AI推薦",
+            title: "寄り道を提案する",
                             description: "あなたの気分に合わせてAIが最適な経由地を提案"
                         )
                         

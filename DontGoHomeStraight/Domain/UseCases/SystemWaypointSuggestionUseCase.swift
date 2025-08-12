@@ -73,6 +73,13 @@ final class SystemWaypointSuggestionUseCase {
             )
             let picked = pickDeterministicTop(filtered: filtered, seedInput: seedInput(now: now, seed: seed))
             if picked.isEmpty == false {
+                #if DEBUG
+                print("🎯 Picked spots (\(picked.count)):")
+                for sc in picked {
+                    let mins = Int(round(sc.timeToSpotMinutes))
+                    print("  • \(sc.place.name) [\(sc.place.genre.googleMapType)] ~ \(mins) min")
+                }
+                #endif
                 let genres = mapToGenres(picked)
                 // Save mapping and exclude IDs (deterministic set)
                 await cacheRepository.savePlacesForGenres(places: picked.map { $0.place }, genres: genres)
@@ -139,6 +146,7 @@ final class SystemWaypointSuggestionUseCase {
     private struct ScoredCandidate: Hashable {
         let place: Place
         let additionalMinutes: Double
+        let timeToSpotMinutes: Double
         let category: GenreCategory
         let score: Double
         let reviews: Int
@@ -172,7 +180,8 @@ final class SystemWaypointSuggestionUseCase {
             let category = place.genre.category
             // Simple score: higher rating, more reviews, shorter additional time
             let score = (place.rating ?? 0) * 1.0 + log(Double((place.userRatingsTotal ?? 0) + 1)) * 0.3 - addMin * 0.2
-            out.append(ScoredCandidate(place: place, additionalMinutes: addMin, category: category, score: score, reviews: place.userRatingsTotal ?? 0))
+            let toSpotMin = d1 / 60.0
+            out.append(ScoredCandidate(place: place, additionalMinutes: addMin, timeToSpotMinutes: toSpotMin, category: category, score: score, reviews: place.userRatingsTotal ?? 0))
         }
         return out
     }
@@ -210,8 +219,11 @@ final class SystemWaypointSuggestionUseCase {
     
     private func mapToGenres(_ picked: [ScoredCandidate]) -> [Genre] {
         return picked.map { sc in
-            Genre(
-                name: nameFromType(sc.place.genre.googleMapType, category: sc.category),
+            let base = nameFromType(sc.place.genre.googleMapType, category: sc.category)
+            let minutes = Int(round(sc.timeToSpotMinutes))
+            let display = "\(base) (\(minutes)分)"
+            return Genre(
+                name: display,
                 category: sc.category,
                 googleMapType: sc.place.genre.googleMapType
             )

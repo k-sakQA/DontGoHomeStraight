@@ -154,7 +154,7 @@ struct MoodSelectionView: View {
         }) {
             HStack {
                 Image(systemName: "sparkles")
-                Text("AI推薦を開始")
+                Text("寄り道を提案する")
             }
             .font(.headline)
             .foregroundColor(.white)

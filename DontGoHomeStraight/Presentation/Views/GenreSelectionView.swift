@@ -56,7 +56,7 @@ struct GenreSelectionView: View {
             Text("🎯")
                 .font(.system(size: 50))
             
-            Text("AI推薦完了！")
+            Text("寄り道の提案ができました！")
                 .font(.title2)
                 .fontWeight(.bold)
             
