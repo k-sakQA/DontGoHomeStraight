@@ -291,6 +291,8 @@ class AppViewModel: ObservableObject {
         isLoading = true
         
         do {
+            // ユーザー選択の行き先を永続保存（ユースケースに委譲）
+            await navigationUseCase.persistSelectedWaypoint(for: genre)
             let route = try await navigationUseCase.startNavigation(
                 origin: currentLocation,
                 destination: destination.coordinate,
@@ -462,6 +464,7 @@ class MockPlaceRepository: PlaceRepository {
 
 class MockCacheRepository: CacheRepository {
     func savePlacesForGenres(places: [Place], genres: [Genre]) async {}
+    func saveSelectedPlaceForGenre(place: Place, genre: Genre) async {}
     func getPlaceForGenre(genre: Genre) async -> Place? { return nil }
     func saveExcludedPlaceIds(_ placeIds: [String]) async {}
     func getExcludedPlaceIds() async -> [String] { return [] }

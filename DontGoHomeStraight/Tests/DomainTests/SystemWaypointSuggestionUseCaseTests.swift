@@ -112,3 +112,4 @@ final class SystemWaypointSuggestionUseCaseTests: XCTestCase {
         XCTAssertEqual(genres.count, 0)
     }
 }
+

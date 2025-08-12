@@ -3,6 +3,8 @@ import Foundation
 class CacheRepositoryImpl: CacheRepository {
     private let userDefaults = UserDefaults.standard
     private let memoryCache = NSCache<NSString, NSData>()
+    // 推薦結果の一時マッピング（アプリ起動中のみ有効）
+    private var tempGenreToPlaceId: [String: String] = [:]
     
     // UserDefaults Keys
     private enum Keys {
@@ -24,30 +26,38 @@ class CacheRepositoryImpl: CacheRepository {
     // MARK: - Place-Genre Mapping
     
     func savePlacesForGenres(places: [Place], genres: [Genre]) async {
-        var mapping: [String: String] = getGenrePlaceMapping()
-        
-        // ジャンルとスポットの関連付けを保存
+        // 推薦結果の一時関連付け（マッピングは永続化しない）
         for (index, genre) in genres.enumerated() {
             if index < places.count {
                 let place = places[index]
-                mapping[genre.id] = place.placeId
-                
-                // スポット詳細もキャッシュ
-                await savePlaceDetails(place)
+                // メモリだけに積む（UserDefaultsのマッピングは選択時に保存）
+                if let data = try? JSONEncoder().encode(place) {
+                    memoryCache.setObject(data as NSData, forKey: "place_\(place.placeId)" as NSString)
+                }
+                tempGenreToPlaceId[genre.id] = place.placeId
             }
         }
-        
+        // 永続化はしない
+    }
+
+    func saveSelectedPlaceForGenre(place: Place, genre: Genre) async {
+        var mapping: [String: String] = getGenrePlaceMapping()
+        mapping[genre.id] = place.placeId
         saveGenrePlaceMapping(mapping)
+        await savePlaceDetails(place)
     }
     
     func getPlaceForGenre(genre: Genre) async -> Place? {
-        let mapping = getGenrePlaceMapping()
-        
-        guard let placeId = mapping[genre.id] else {
-            return nil
+        // 先に一時マッピングを確認
+        if let pid = tempGenreToPlaceId[genre.id] {
+            return await getPlaceDetails(placeId: pid)
         }
-        
-        return await getPlaceDetails(placeId: placeId)
+        // 永続マッピングを参照
+        let mapping = getGenrePlaceMapping()
+        if let pid = mapping[genre.id] {
+            return await getPlaceDetails(placeId: pid)
+        }
+        return nil
     }
     
     private func getGenrePlaceMapping() -> [String: String] {
@@ -147,6 +157,7 @@ class CacheRepositoryImpl: CacheRepository {
     func clearCache() async {
         // メモリキャッシュクリア
         memoryCache.removeAllObjects()
+        tempGenreToPlaceId.removeAll()
         
         // UserDefaultsのキャッシュデータクリア
         let mapping = getGenrePlaceMapping()

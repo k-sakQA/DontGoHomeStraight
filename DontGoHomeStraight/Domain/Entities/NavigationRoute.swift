@@ -80,7 +80,14 @@ extension NavigationRoute {
     var googleMapsURL: URL? {
         // Google Mapsアプリで経路案内を開始するURL
         // 経由地を含む場合は daddr に "経由地+to:最終目的地" の形式で指定
-        let waypointQuery = "\(waypoint.coordinate.latitude),\(waypoint.coordinate.longitude)"
+        let waypointQuery: String = {
+            if let masked = maskedWaypointQuery() {
+                return masked
+            } else {
+                let c = offsetCoordinate(waypoint.coordinate, meters: 60)
+                return "\(c.latitude),\(c.longitude)"
+            }
+        }()
         let destinationQuery = "\(destination.latitude),\(destination.longitude)"
         let combinedDestination = "\(waypointQuery)+to:\(destinationQuery)"
         
@@ -97,7 +104,14 @@ extension NavigationRoute {
     var appleMapsURL: URL? {
         // Apple Mapsアプリでの経路案内URL（フォールバック用）
         // 経由地を含む場合は daddr に "経由地+to:最終目的地" の形式で指定
-        let waypointQuery = "\(waypoint.coordinate.latitude),\(waypoint.coordinate.longitude)"
+        let waypointQuery: String = {
+            if let masked = maskedWaypointQuery() {
+                return masked
+            } else {
+                let c = offsetCoordinate(waypoint.coordinate, meters: 60)
+                return "\(c.latitude),\(c.longitude)"
+            }
+        }()
         let destinationQuery = "\(destination.latitude),\(destination.longitude)"
         let combinedDestination = "\(waypointQuery)+to:\(destinationQuery)"
         
@@ -109,6 +123,45 @@ extension NavigationRoute {
         ]
         
         return components?.url
+    }
+}
+
+// MARK: - Masking helpers
+extension NavigationRoute {
+    // 郵便番号などで行き先名の露出を避ける
+    fileprivate func maskedWaypointQuery() -> String? {
+        let addr = waypoint.address
+        if addr.isEmpty { return nil }
+        if let m = addr.range(of: "〒\\d{3}-\\d{4}", options: .regularExpression) {
+            return String(addr[m])
+        }
+        if let m = addr.range(of: "\\b\\d{3}-\\d{4}\\b", options: .regularExpression) {
+            return String(addr[m])
+        }
+        // 都道府県+市区まで
+        if let prefRange = addr.range(of: "(..都|..道|..府|....県)", options: .regularExpression) {
+            let tail = addr[prefRange.lowerBound...]
+            if let wardEnd = tail.range(of: "区")?.upperBound {
+                return String(tail[..<wardEnd])
+            }
+            if let cityEnd = tail.range(of: "市")?.upperBound {
+                return String(tail[..<cityEnd])
+            }
+            return String(tail)
+        }
+        return nil
+    }
+
+    // 指定メートルだけ座標をオフセット（POI名の自動ラベルを避ける）
+    fileprivate func offsetCoordinate(_ coord: CLLocationCoordinate2D, meters: Double) -> CLLocationCoordinate2D {
+        let bearing = Double.random(in: 0..<(2 * .pi))
+        let dx = meters * cos(bearing)
+        let dy = meters * sin(bearing)
+        let metersPerLat = 111_132.0
+        let metersPerLon = cos(coord.latitude * .pi / 180.0) * 111_320.0
+        let dLat = dy / metersPerLat
+        let dLon = dx / metersPerLon
+        return CLLocationCoordinate2D(latitude: coord.latitude + dLat, longitude: coord.longitude + dLon)
     }
 }
 

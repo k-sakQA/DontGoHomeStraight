@@ -28,6 +28,7 @@
 				Info.plist,
 				Tests/DomainTests/GenreTests.swift,
 				Tests/DomainTests/MoodTests.swift,
+				Tests/DomainTests/SystemWaypointSuggestionUseCaseTests.swift,
 			);
 			target = 7BF784732E4205490040A86C /* DontGoHomeStraight */;
 		};

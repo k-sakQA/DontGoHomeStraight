@@ -250,10 +250,9 @@ struct GooglePlaceResult: Codable {
         case userRatingsTotal = "user_ratings_total"
     }
     
-    func toPlace() -> Place?
+    func toPlace() -> Place? {
         let genre = determineGenre(from: types)
-        
-                    return Place(
+        return Place(
                 name: name,
                 coordinate: CLLocationCoordinate2D(
                     latitude: geometry.location.lat,
@@ -269,6 +268,7 @@ struct GooglePlaceResult: Codable {
                 vicinity: vicinity,
                 userRatingsTotal: userRatingsTotal
             )
+    }
     }
     
     private func determineGenre(from types: [String]?) -> Genre {
@@ -351,7 +351,7 @@ struct GooglePlaceResult: Codable {
         default: return "スポット"
         }
     }
-}
+
 
 struct PlaceGeometry: Codable {
     let location: PlaceLocation
@@ -396,11 +396,10 @@ final class GoogleDistanceMatrixClient {
     ) async throws -> [TimeInterval] {
         guard destinations.isEmpty == false else { return [] }
         let dmBase = "https://maps.googleapis.com/maps/api/distancematrix/json"
-        let destinationsParam = destinations.map { "\($0.latitude),\($0.longitude)" }.joined(separator: "|")
         
-        func buildURL(modeString: String, addDepartureNow: Bool) -> URL? {
+        func buildURL(modeString: String, addDepartureNow: Bool, destinationsParam: String) -> URL? {
             #if DEBUG
-            print("🛠️ DM: build URL (mode=\(modeString), addDepartureNow=\(addDepartureNow)) for destinations=")
+            print("🛠️ DM: build URL (mode=\(modeString), addDepartureNow=\(addDepartureNow)) for destinations size=\(destinationsParam.split(separator: "|").count)")
             #endif
             var components = URLComponents(string: dmBase)
             var queryItems: [URLQueryItem] = [
@@ -458,39 +457,72 @@ final class GoogleDistanceMatrixClient {
             }
         }
         
-        // 1st try: requested mode
+        // Google Distance Matrix は elements 上限（origins×destinations <= 100）があるため分割実行
+        // origins は常に1想定なので、destinations を最大90件単位で分割する
+        func chunked<T>(_ array: [T], size: Int) -> [[T]] {
+            guard size > 0 else { return [array] }
+            var result: [[T]] = []
+            var i = 0
+            while i < array.count {
+                let end = min(i + size, array.count)
+                result.append(Array(array[i..<end]))
+                i = end
+            }
+            return result
+        }
+
         let addDeparture = (mode == .transit)
-        guard let firstURL = buildURL(modeString: mode.googleMapsMode, addDepartureNow: addDeparture) else { throw PlaceRepositoryError.networkError }
-        var dm = try await requestDurations(url: firstURL)
-        var row = dm.rows.first
+        // Google Distance Matrix の制約（origins×destinations の次元上限）に合わせて
+        // 宛先は 25 件/回に分割（origin は常に 1）
+        let maxPerRequest = 25
+        let batches = chunked(destinations, size: maxPerRequest)
+        var allDurations: [TimeInterval] = []
         
-        // Fallback if all ZERO_RESULTS/!OK
-        if let r = row, r.elements.allSatisfy({ $0.status != "OK" }) {
-            var fallbackModeString: String? = nil
-            if mode == .transit || mode == .cycling {
-                fallbackModeString = TransportMode.walking.googleMapsMode
-            } else if mode == .walking {
-                fallbackModeString = TransportMode.driving.googleMapsMode
+        for (batchIndex, batch) in batches.enumerated() {
+            let destinationsParam = batch.map { "\($0.latitude),\($0.longitude)" }.joined(separator: "|")
+            guard let firstURL = buildURL(modeString: mode.googleMapsMode, addDepartureNow: addDeparture, destinationsParam: destinationsParam) else {
+                allDurations.append(contentsOf: Array(repeating: TimeInterval.infinity, count: batch.count))
+                continue
             }
-            if let fb = fallbackModeString, let fbURL = buildURL(modeString: fb, addDepartureNow: false) {
+            var dm = try await requestDurations(url: firstURL)
+            var row = dm.rows.first
+            // Fallback if all ZERO_RESULTS/!OK
+            if let r = row, r.elements.allSatisfy({ $0.status != "OK" }) {
+                var fallbackModeString: String? = nil
+                if mode == .transit || mode == .cycling {
+                    fallbackModeString = TransportMode.walking.googleMapsMode
+                } else if mode == .walking {
+                    fallbackModeString = TransportMode.driving.googleMapsMode
+                }
+                if let fb = fallbackModeString, let fbURL = buildURL(modeString: fb, addDepartureNow: false, destinationsParam: destinationsParam) {
+                    #if DEBUG
+                    print("🔁 Distance Matrix fallback with mode=\(fb) for batch #\(batchIndex+1)/\(batches.count)")
+                    #endif
+                    dm = try await requestDurations(url: fbURL)
+                    row = dm.rows.first
+                }
+            }
+            guard let finalRow = row else {
+                allDurations.append(contentsOf: Array(repeating: TimeInterval.infinity, count: batch.count))
+                continue
+            }
+            let durations = finalRow.elements.map { el -> TimeInterval in
+                if el.status == "OK", let duration = el.duration {
+                    return TimeInterval(duration.value)
+                }
                 #if DEBUG
-                print("🔁 Distance Matrix fallback with mode=\(fb)")
+                print("⚠️ Distance Matrix element status: \(el.status)")
                 #endif
-                dm = try await requestDurations(url: fbURL)
-                row = dm.rows.first
+                return TimeInterval.infinity
+            }
+            // 要素不足時はInfで埋める
+            if durations.count < batch.count {
+                allDurations.append(contentsOf: durations + Array(repeating: TimeInterval.infinity, count: batch.count - durations.count))
+            } else {
+                allDurations.append(contentsOf: durations.prefix(batch.count))
             }
         }
-        
-        guard let finalRow = row else { return Array(repeating: TimeInterval.infinity, count: destinations.count) }
-        return finalRow.elements.map { el in
-            if el.status == "OK", let duration = el.duration {
-                return TimeInterval(duration.value)
-            }
-            #if DEBUG
-            print("⚠️ Distance Matrix element status: \(el.status)")
-            #endif
-            return TimeInterval.infinity
-        }
+        return allDurations
     }
 }
 
@@ -502,6 +534,7 @@ private struct DistanceMatrixResponse: Codable {
         struct Duration: Codable { let value: Int }
     }
     let rows: [Row]
+    let status: String?
 }
 
 // MARK: - Place Details helper for open_now

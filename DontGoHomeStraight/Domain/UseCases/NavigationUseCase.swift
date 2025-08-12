@@ -16,6 +16,9 @@ protocol NavigationUseCase {
     ) -> Bool
     
     func getWaypointForGenre(_ genre: Genre) async -> Place?
+
+    /// ユーザーが選択したジャンルに対応する経由地を永続保存する
+    func persistSelectedWaypoint(for genre: Genre) async
 }
 
 class NavigationUseCaseImpl: NavigationUseCase {
@@ -66,6 +69,12 @@ class NavigationUseCaseImpl: NavigationUseCase {
     func getWaypointForGenre(_ genre: Genre) async -> Place? {
         return await cacheRepository.getPlaceForGenre(genre: genre)
     }
+
+     func persistSelectedWaypoint(for genre: Genre) async {
+         if let waypoint = await cacheRepository.getPlaceForGenre(genre: genre) {
+             await cacheRepository.saveSelectedPlaceForGenre(place: waypoint, genre: genre)
+         }
+     }
 }
 
 enum NavigationError: LocalizedError {
