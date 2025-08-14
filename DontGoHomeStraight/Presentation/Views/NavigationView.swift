@@ -98,12 +98,12 @@ struct NavigationView: View {
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(selectedGenre.category == .restaurant ? Color.orange.opacity(0.2) : Color.blue.opacity(0.2))
+                        .background(selectedGenre.category == .restaurant ? Color.appAccent.opacity(0.18) : Color.appPrimary.opacity(0.18))
                         .cornerRadius(4)
                 }
             }
             .padding()
-            .background(Color.blue.opacity(0.1))
+            .background(Color.appPrimary.opacity(0.08))
             .cornerRadius(12)
         }
     }
@@ -123,7 +123,7 @@ struct NavigationView: View {
                     icon: "location.circle",
                     label: "移動手段",
                     value: route.transportMode.displayName,
-                    color: .blue
+                    color: .appPrimary
                 )
                 
                 if route.totalDistance > 0 {
@@ -140,13 +140,13 @@ struct NavigationView: View {
                         icon: "clock",
                         label: "予想時間",
                         value: route.formattedDuration,
-                        color: .orange
+                        color: .appAccent
                     )
                 }
             }
         }
         .padding()
-        .background(Color.gray.opacity(0.05))
+        .background(Color.appSurfaceAlt)
         .cornerRadius(12)
     }
     
@@ -173,7 +173,7 @@ struct NavigationView: View {
         VStack(spacing: 12) {
             HStack {
                 Image(systemName: "target")
-                    .foregroundColor(.blue)
+                    .foregroundColor(.appPrimary)
                     .font(.title2)
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -202,7 +202,7 @@ struct NavigationView: View {
             }
         }
         .padding()
-        .background(Color.orange.opacity(0.1))
+        .background(Color.appAccent.opacity(0.12))
         .cornerRadius(12)
     }
     
@@ -219,7 +219,7 @@ struct NavigationView: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(Color.blue)
+            .background(Color.appPrimary)
             .cornerRadius(12)
         }
     }
@@ -380,10 +380,10 @@ struct NavigationProgressView: View {
             }
             
             ProgressView(value: progress)
-                .tint(.blue)
+                .tint(.appPrimary)
         }
         .padding()
-        .background(Color.gray.opacity(0.05))
+        .background(Color.appSurfaceAlt)
         .cornerRadius(8)
     }
 }

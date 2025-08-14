@@ -74,15 +74,15 @@ struct GenreSelectionView: View {
     private var importantNoticeView: some View {
         HStack(spacing: 8) {
             Image(systemName: "eye.slash.fill")
-                .foregroundColor(.orange)
+                .foregroundColor(.appAccent)
             
             Text("※スポット名は到着まで秘密！")
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(.orange)
+                .foregroundColor(.appAccent)
         }
         .padding(8)
-        .background(Color.orange.opacity(0.1))
+        .background(Color.appAccent.opacity(0.12))
         .cornerRadius(8)
     }
     
@@ -147,7 +147,7 @@ struct GenreSelectionView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(selectedGenre != nil ? Color.blue : Color.gray)
+                .background(selectedGenre != nil ? Color.appPrimary : Color.gray)
                 .cornerRadius(12)
             }
             .disabled(selectedGenre == nil)
@@ -189,13 +189,13 @@ struct GenreCard: View {
                         Text(genre.name)
                             .font(.headline)
                             .fontWeight(.semibold)
-                            .foregroundColor(isSelected ? .blue : .primary)
+                            .foregroundColor(isSelected ? .appPrimary : .primary)
                         
                         Spacer()
                         
                         if isSelected {
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.blue)
+                                .foregroundColor(.appPrimary)
                                 .font(.title2)
                         }
                     }
@@ -227,22 +227,22 @@ struct GenreCard: View {
     private var circleColor: Color {
         switch genre.category {
         case .restaurant:
-            return .orange
+            return .appAccent
         case .other:
-            return .blue
+            return .appPrimary
         }
     }
     
     private var backgroundColor: Color {
         if isSelected {
-            return Color.blue.opacity(0.1)
+            return Color.appPrimary.opacity(0.1)
         } else {
-            return Color.gray.opacity(0.05)
+            return Color.appSurfaceAlt
         }
     }
     
     private var borderColor: Color {
-        isSelected ? .blue : .gray.opacity(0.3)
+        isSelected ? .appPrimary : .gray.opacity(0.3)
     }
 }
 
@@ -269,7 +269,7 @@ struct MoodSummaryView: View {
                 .fontWeight(.medium)
         }
         .padding()
-        .background(Color.gray.opacity(0.1))
+        .background(Color.appSurfaceAlt)
         .cornerRadius(8)
     }
 }
@@ -338,13 +338,13 @@ struct EnhancedGenreCard: View {
                         Text(genre.name)
                             .font(.headline)
                             .fontWeight(.semibold)
-                            .foregroundColor(isSelected ? .blue : .primary)
+                            .foregroundColor(isSelected ? .appPrimary : .primary)
                         
                         Spacer()
                         
                         if isSelected {
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.blue)
+                                .foregroundColor(.appPrimary)
                                 .font(.title2)
                                 .transition(.scale.combined(with: .opacity))
                         }
@@ -383,22 +383,22 @@ struct EnhancedGenreCard: View {
     private var circleColor: Color {
         switch genre.category {
         case .restaurant:
-            return .orange
+            return .appAccent
         case .other:
-            return .blue
+            return .appPrimary
         }
     }
     
     private var backgroundColor: Color {
         if isSelected {
-            return Color.blue.opacity(0.15)
+            return Color.appPrimary.opacity(0.12)
         } else {
-            return Color.gray.opacity(0.05)
+            return Color.appSurfaceAlt
         }
     }
     
     private var borderColor: Color {
-        isSelected ? .blue : .gray.opacity(0.3)
+        isSelected ? .appPrimary : .gray.opacity(0.3)
     }
 }
 

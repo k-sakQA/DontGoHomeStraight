@@ -59,7 +59,7 @@ struct DestinationSettingView: View {
                 }
             }
             .padding()
-            .background(Color.gray.opacity(0.1))
+            .background(Color.appSurfaceAlt)
             .cornerRadius(12)
             
             if isSearching {
@@ -112,7 +112,7 @@ struct DestinationSettingView: View {
                     Button(action: centerOnCurrentLocation) {
                         Image(systemName: "location.fill")
                             .font(.title2)
-                            .foregroundColor(.blue)
+                            .foregroundColor(.appPrimary)
                             .frame(width: 44, height: 44)
                             .background(Color.white)
                             .clipShape(Circle())
@@ -171,7 +171,7 @@ struct DestinationSettingView: View {
             }
             .padding(.horizontal)
         }
-        .background(Color.blue.opacity(0.1))
+        .background(Color.appPrimary.opacity(0.1))
     }
     
     @ViewBuilder
@@ -188,7 +188,7 @@ struct DestinationSettingView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(selectedCoordinate != nil ? Color.blue : Color.gray)
+                .background(selectedCoordinate != nil ? Color.appPrimary : Color.gray)
                 .cornerRadius(12)
             }
             .disabled(selectedCoordinate == nil)
@@ -341,7 +341,7 @@ struct MapControlsView: View {
             Button(action: onCurrentLocationTap) {
                 Image(systemName: "location.fill")
                     .font(.title2)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.appPrimary)
             }
             .frame(width: 44, height: 44)
             .background(Color.white)

@@ -25,7 +25,7 @@ struct HomeView: View {
             VStack(spacing: 20) {
                 Image(systemName: "map")
                     .font(.system(size: 80))
-                    .foregroundColor(.blue)
+                    .foregroundColor(.appPrimary)
                 
                 Text("🗺️ 今日はどこへ？")
                     .font(.title2)
@@ -51,7 +51,7 @@ struct HomeView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
+                        .background(Color.appPrimary)
                         .cornerRadius(12)
                     }
                     
@@ -91,7 +91,7 @@ struct HomeView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.orange)
+                        .background(Color.appAccent)
                         .cornerRadius(12)
                     }
                 }
@@ -123,7 +123,7 @@ struct HomeView: View {
             }
         }
         .padding()
-        .background(Color.gray.opacity(0.1))
+        .background(Color.appSurfaceAlt)
         .cornerRadius(8)
     }
     
@@ -184,7 +184,7 @@ struct LocationPermissionGuideView: View {
         VStack(spacing: 12) {
             Image(systemName: "info.circle")
                 .font(.title)
-                .foregroundColor(.blue)
+                .foregroundColor(.appPrimary)
             
             Text("位置情報について")
                 .font(.headline)
@@ -196,7 +196,7 @@ struct LocationPermissionGuideView: View {
                 .lineLimit(nil)
         }
         .padding()
-        .background(Color.blue.opacity(0.1))
+        .background(Color.appPrimary.opacity(0.1))
         .cornerRadius(12)
     }
 }
@@ -210,7 +210,7 @@ struct AppFeatureView: View {
         HStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(.blue)
+                .foregroundColor(.appPrimary)
                 .frame(width: 30)
             
             VStack(alignment: .leading, spacing: 4) {
@@ -226,7 +226,7 @@ struct AppFeatureView: View {
             Spacer()
         }
         .padding()
-        .background(Color.gray.opacity(0.05))
+        .background(Color.appSurfaceAlt)
         .cornerRadius(8)
     }
 }

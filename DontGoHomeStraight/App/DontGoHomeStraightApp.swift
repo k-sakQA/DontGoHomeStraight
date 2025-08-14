@@ -17,6 +17,8 @@ struct DontGoHomeStraightApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .tint(.appPrimary)
+                .background(Color.appBackground)
                 .preferredColorScheme(.light) // ライトモード固定（オプション）
         }
     }

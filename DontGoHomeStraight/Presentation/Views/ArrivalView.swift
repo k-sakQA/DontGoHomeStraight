@@ -49,7 +49,7 @@ struct ArrivalView: View {
                 Text("到着しました！")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.appPrimary)
                 
                 Text("お疲れさまでした")
                     .font(.title3)
@@ -124,8 +124,8 @@ struct ArrivalView: View {
                     .fill(
                         LinearGradient(
                             gradient: Gradient(colors: [
-                                place.genre.category == .restaurant ? Color.orange.opacity(0.1) : Color.blue.opacity(0.1),
-                                place.genre.category == .restaurant ? Color.red.opacity(0.1) : Color.purple.opacity(0.1)
+                                place.genre.category == .restaurant ? Color.appAccent.opacity(0.12) : Color.appPrimary.opacity(0.10),
+                                place.genre.category == .restaurant ? Color.red.opacity(0.10) : Color.appAccent.opacity(0.08)
                             ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -133,7 +133,7 @@ struct ArrivalView: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(place.genre.category == .restaurant ? Color.orange : Color.blue, lineWidth: 2)
+                            .stroke(place.genre.category == .restaurant ? Color.appAccent : Color.appPrimary, lineWidth: 2)
                     )
             )
             
@@ -149,7 +149,7 @@ struct ArrivalView: View {
                 icon: "tag.fill",
                 label: "ジャンル",
                 value: place.genre.name,
-                color: .blue
+                color: .appPrimary
             )
             
             spotDetailItem(
@@ -195,7 +195,7 @@ struct ArrivalView: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color.gray.opacity(0.05))
+        .background(Color.appSurfaceAlt)
         .cornerRadius(8)
     }
     
@@ -234,7 +234,7 @@ struct ArrivalView: View {
             }
         }
         .padding()
-        .background(Color.blue.opacity(0.05))
+        .background(Color.appPrimary.opacity(0.06))
         .cornerRadius(12)
     }
     
@@ -242,7 +242,7 @@ struct ArrivalView: View {
     private func journeyDetailRow(icon: String, label: String, value: String) -> some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(.blue)
+                .foregroundColor(.appPrimary)
                 .frame(width: 20)
             
             Text(label)
@@ -263,7 +263,7 @@ struct ArrivalView: View {
             Text("🌟 素敵な寄り道を！ 🌟")
                 .font(.title3)
                 .fontWeight(.bold)
-                .foregroundColor(.orange)
+                .foregroundColor(.appAccent)
             
             Text("新しい発見はありましたか？\nまた次回もお楽しみください。")
                 .font(.subheadline)
@@ -272,7 +272,7 @@ struct ArrivalView: View {
                 .lineSpacing(4)
         }
         .padding()
-        .background(Color.orange.opacity(0.1))
+        .background(Color.appAccent.opacity(0.12))
         .cornerRadius(12)
     }
     
@@ -290,7 +290,7 @@ struct ArrivalView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.blue)
+                .background(Color.appPrimary)
                 .cornerRadius(12)
             }
             
@@ -348,7 +348,7 @@ struct ConfettiPiece: View {
     private let size: CGFloat
     
     init() {
-        self.color = colors.randomElement() ?? .blue
+        self.color = colors.randomElement() ?? .appPrimary
         self.size = CGFloat.random(in: 4...8)
     }
     
@@ -379,7 +379,7 @@ struct AnimatedRevealCard: View {
                     .foregroundColor(.gray)
             }
             .frame(maxWidth: .infinity, minHeight: 150)
-            .background(Color.gray.opacity(0.2))
+            .background(Color.appSurfaceAlt)
             .cornerRadius(16)
             .rotation3DEffect(
                 .degrees(isRevealed ? 180 : 0),
@@ -403,7 +403,7 @@ struct AnimatedRevealCard: View {
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity, minHeight: 150)
-            .background(Color.blue.opacity(0.1))
+            .background(Color.appPrimary.opacity(0.1))
             .cornerRadius(16)
             .rotation3DEffect(
                 .degrees(isRevealed ? 0 : 180),

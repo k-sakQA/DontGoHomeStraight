@@ -144,7 +144,7 @@ struct MoodSelectionView: View {
                 .padding(.horizontal)
         }
         .padding()
-        .background(Color.blue.opacity(0.1))
+        .background(Color.appPrimary.opacity(0.08))
         .cornerRadius(12)
     }
     
@@ -163,7 +163,7 @@ struct MoodSelectionView: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(currentMood != nil ? Color.blue : Color.gray)
+            .background(currentMood != nil ? Color.appPrimary : Color.gray)
             .cornerRadius(12)
         }
         .disabled(currentMood == nil)
@@ -181,10 +181,10 @@ struct MoodSelectionView: View {
                 Text("AIで提案する")
             }
             .font(.subheadline)
-            .foregroundColor(.blue)
+            .foregroundColor(.appPrimary)
             .frame(maxWidth: .infinity)
             .padding(10)
-            .background(Color.blue.opacity(0.1))
+            .background(Color.appPrimary.opacity(0.1))
             .cornerRadius(10)
         }
         .disabled(currentMood == nil)
@@ -215,7 +215,7 @@ struct ActivityTypeCard: View {
                 Text(activityType.displayName)
                     .font(.body)
                     .fontWeight(isSelected ? .semibold : .regular)
-                    .foregroundColor(isSelected ? .blue : .primary)
+                    .foregroundColor(isSelected ? .appPrimary : .primary)
                 
                 Text(activityType.description)
                     .font(.caption)
@@ -238,14 +238,14 @@ struct ActivityTypeCard: View {
     
     private var backgroundColor: Color {
         if isSelected {
-            return Color.blue.opacity(0.1)
+            return Color.appPrimary.opacity(0.1)
         } else {
-            return Color.gray.opacity(0.05)
+            return Color.appSurfaceAlt
         }
     }
     
     private var borderColor: Color {
-        isSelected ? .blue : .gray.opacity(0.3)
+        isSelected ? .appPrimary : .gray.opacity(0.3)
     }
 }
 
@@ -266,7 +266,7 @@ struct VibeTypeCard: View {
                     Text(vibeType.displayName)
                         .font(.body)
                         .fontWeight(isSelected ? .semibold : .regular)
-                        .foregroundColor(isSelected ? .blue : .primary)
+                        .foregroundColor(isSelected ? .appPrimary : .primary)
                     
                     Text(vibeType.description)
                         .font(.caption)
@@ -278,7 +278,7 @@ struct VibeTypeCard: View {
                 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.blue)
+                        .foregroundColor(.appPrimary)
                         .font(.title2)
                 }
             }
@@ -295,14 +295,14 @@ struct VibeTypeCard: View {
     
     private var backgroundColor: Color {
         if isSelected {
-            return Color.blue.opacity(0.1)
+            return Color.appPrimary.opacity(0.1)
         } else {
-            return Color.gray.opacity(0.05)
+            return Color.appSurfaceAlt
         }
     }
     
     private var borderColor: Color {
-        isSelected ? .blue : .gray.opacity(0.3)
+        isSelected ? .appPrimary : .gray.opacity(0.3)
     }
 }
 
@@ -389,7 +389,7 @@ struct MoodPreviewCard: View {
         .padding()
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)]),
+                gradient: Gradient(colors: [Color.appPrimary.opacity(0.08), Color.appAccent.opacity(0.08)]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
