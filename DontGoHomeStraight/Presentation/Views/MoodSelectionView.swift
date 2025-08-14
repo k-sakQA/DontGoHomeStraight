@@ -24,8 +24,11 @@ struct MoodSelectionView: View {
                 
                 Spacer(minLength: 20)
                 
-                // ナビゲーションボタン
+                // ナビゲーションボタン（システム提案）
                 navigationButton
+                
+                // AIで提案する（明示ボタン）
+                aiSuggestionButton
             }
             .padding()
         }
@@ -162,6 +165,27 @@ struct MoodSelectionView: View {
             .padding()
             .background(currentMood != nil ? Color.blue : Color.gray)
             .cornerRadius(12)
+        }
+        .disabled(currentMood == nil)
+    }
+
+    @ViewBuilder
+    private var aiSuggestionButton: some View {
+        Button(action: {
+            guard let mood = currentMood else { return }
+            viewModel.setMood(mood)
+            viewModel.navigateToGenreSelectionAI()
+        }) {
+            HStack {
+                Image(systemName: "brain.head.profile")
+                Text("AIで提案する")
+            }
+            .font(.subheadline)
+            .foregroundColor(.blue)
+            .frame(maxWidth: .infinity)
+            .padding(10)
+            .background(Color.blue.opacity(0.1))
+            .cornerRadius(10)
         }
         .disabled(currentMood == nil)
     }

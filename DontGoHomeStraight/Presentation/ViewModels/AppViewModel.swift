@@ -127,6 +127,17 @@ class AppViewModel: ObservableObject {
         }
     }
     
+    // AIフローを明示的に選ぶナビゲーション
+    func navigateToGenreSelectionAI() {
+        guard selectedMood != nil else {
+            showErrorMessage("気分を選択してください")
+            return
+        }
+        Task {
+            await getRecommendations(forceAI: true)
+        }
+    }
+    
     func navigateToNavigation() {
         guard let selectedGenre = selectedGenre else {
             showErrorMessage("ジャンルを選択してください")
@@ -212,7 +223,7 @@ class AppViewModel: ObservableObject {
         return try await navigationUseCase.startNavigation(origin: origin, destination: destination, selectedGenre: selectedGenre, transportMode: transportMode)
     }
     
-    private func getRecommendations() async {
+    private func getRecommendations(forceAI: Bool = false) async {
         guard let currentLocation = currentLocation,
               let destination = destination,
               let mood = selectedMood,
@@ -233,7 +244,7 @@ class AppViewModel: ObservableObject {
         
         do {
             let genres: [Genre]
-            if FeatureFlags.detourSystemPicker, let sys = systemWaypointSuggestionUseCase {
+            if forceAI == false, FeatureFlags.detourSystemPicker, let sys = systemWaypointSuggestionUseCase {
                 #if DEBUG
                 print("🛠️ detour.system_picker=ON: using SystemWaypointSuggestionUseCase")
                 #endif
@@ -244,6 +255,9 @@ class AppViewModel: ObservableObject {
                     transportMode: transportMode
                 )
             } else {
+                #if DEBUG
+                if forceAI { print("🧠 Forcing AI recommendation flow") }
+                #endif
                 genres = try await placeRecommendationUseCase.getRecommendations(
                     currentLocation: currentLocation,
                     destination: destination.coordinate,
