@@ -5,24 +5,29 @@ struct GenreSelectionView: View {
     @State private var selectedGenre: Genre?
     
     var body: some View {
-        VStack(spacing: 24) {
-            // ローディング状態
-            if viewModel.isLoading {
-                loadingView
-            } else {
-                // ヘッダー情報
-                headerSection
-                
-                // ジャンル選択
-                genreSelectionSection
-                
-                Spacer()
-                
-                // ナビゲーションボタン
-                navigationButton
+        ZStack {
+            LinearGradient.appBackgroundGradient
+                .ignoresSafeArea()
+            
+            VStack(spacing: 24) {
+                // ローディング状態
+                if viewModel.isLoading {
+                    loadingView
+                } else {
+                    // ヘッダー情報
+                    headerSection
+                    
+                    // ジャンル選択
+                    genreSelectionSection
+                    
+                    Spacer()
+                    
+                    // ナビゲーションボタン
+                    navigationButton
+                }
             }
+            .padding()
         }
-        .padding()
         .navigationTitle("どのジャンルにする？")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -53,8 +58,14 @@ struct GenreSelectionView: View {
     @ViewBuilder
     private var headerSection: some View {
         VStack(spacing: 16) {
-            Text("🎯")
-                .font(.system(size: 50))
+            ZStack {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(LinearGradient.appHeroGradient)
+                    .frame(width: 80, height: 80)
+                    .shadow(color: Color.appPurpleStart.opacity(0.3), radius: 12, x: 0, y: 12)
+                Text("🎯")
+                    .font(.system(size: 30))
+            }
             
             Text("寄り道の提案ができました！")
                 .font(.title2)
@@ -81,8 +92,12 @@ struct GenreSelectionView: View {
                 .fontWeight(.medium)
                 .foregroundColor(.appAccent)
         }
-        .padding(8)
-        .background(Color.appAccent.opacity(0.12))
+        .padding(12)
+        .background(Color.appAccent.opacity(0.1))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.appAccent.opacity(0.3), lineWidth: 1)
+        )
         .cornerRadius(8)
     }
     
@@ -126,7 +141,7 @@ struct GenreSelectionView: View {
             Button("最初に戻る") {
                 viewModel.navigateToHome()
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(SecondaryButtonStyle())
         }
         .padding()
     }
@@ -143,13 +158,9 @@ struct GenreSelectionView: View {
                     Image(systemName: "location.fill")
                     Text("ここに決定！")
                 }
-                .font(.headline)
-                .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding()
-                .background(selectedGenre != nil ? Color.appPrimary : Color.gray)
-                .cornerRadius(12)
             }
+            .buttonStyle(PrimaryButtonStyle())
             .disabled(selectedGenre == nil)
             
             Text("選択したジャンルの場所へ\nGoogle Mapsでナビゲーションを開始します")

@@ -14,20 +14,25 @@ struct DestinationSettingView: View {
     @State private var isSearching = false
     
     var body: some View {
-        VStack(spacing: 0) {
-            // 検索バー
-            searchBarSection
+        ZStack {
+            LinearGradient.appBackgroundGradient
+                .ignoresSafeArea()
             
-            // 地図
-            mapSection
-            
-            // 選択された目的地情報
-            if selectedCoordinate != nil {
-                destinationInfoSection
+            VStack(spacing: 0) {
+                // 検索バー
+                searchBarSection
+                
+                // 地図
+                mapSection
+                
+                // 選択された目的地情報
+                if selectedCoordinate != nil {
+                    destinationInfoSection
+                }
+                
+                // ナビゲーションボタン
+                navigationButtonSection
             }
-            
-            // ナビゲーションボタン
-            navigationButtonSection
         }
         .navigationTitle("目的地を設定")
         .navigationBarTitleDisplayMode(.inline)
@@ -59,8 +64,9 @@ struct DestinationSettingView: View {
                 }
             }
             .padding()
-            .background(Color.appSurfaceAlt)
+            .background(Color.white.opacity(0.95))
             .cornerRadius(12)
+            .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
             
             if isSearching {
                 HStack {
@@ -171,7 +177,7 @@ struct DestinationSettingView: View {
             }
             .padding(.horizontal)
         }
-        .background(Color.appPrimary.opacity(0.1))
+        .appCard()
     }
     
     @ViewBuilder
@@ -184,13 +190,9 @@ struct DestinationSettingView: View {
                     Image(systemName: "arrow.right")
                     Text("次へ")
                 }
-                .font(.headline)
-                .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding()
-                .background(selectedCoordinate != nil ? Color.appPrimary : Color.gray)
-                .cornerRadius(12)
             }
+            .buttonStyle(PrimaryButtonStyle())
             .disabled(selectedCoordinate == nil)
         }
         .padding()

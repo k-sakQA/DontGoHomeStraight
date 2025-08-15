@@ -6,19 +6,24 @@ struct TransportModeSelectionView: View {
     @State private var selectedMode: TransportMode?
     
     var body: some View {
-        VStack(spacing: 24) {
-            // ヘッダー情報
-            destinationInfoSection
+        ZStack {
+            LinearGradient.appBackgroundGradient
+                .ignoresSafeArea()
             
-            // 移動手段選択グリッド
-            transportModeGrid
-            
-            Spacer()
-            
-            // ナビゲーションボタン
-            navigationButton
+            VStack(spacing: 24) {
+                // ヘッダー情報
+                destinationInfoSection
+                
+                // 移動手段選択グリッド
+                transportModeGrid
+                
+                Spacer()
+                
+                // ナビゲーションボタン
+                navigationButton
+            }
+            .padding()
         }
-        .padding()
         .navigationTitle("移動手段を選択")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -43,9 +48,7 @@ struct TransportModeSelectionView: View {
                     Spacer()
                 }
             }
-            .padding()
-            .background(Color.appSurfaceAlt)
-            .cornerRadius(12)
+            .appCard()
         }
     }
     
@@ -84,13 +87,9 @@ struct TransportModeSelectionView: View {
                 Image(systemName: "arrow.right")
                 Text("次へ")
             }
-            .font(.headline)
-            .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .padding()
-            .background(selectedMode != nil ? Color.appPrimary : Color.gray)
-            .cornerRadius(12)
         }
+        .buttonStyle(PrimaryButtonStyle())
         .disabled(selectedMode == nil)
     }
 }

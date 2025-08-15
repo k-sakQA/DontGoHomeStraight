@@ -6,31 +6,36 @@ struct MoodSelectionView: View {
     @State private var selectedVibeType: VibeType?
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 32) {
-                // ヘッダー情報
-                headerSection
-                
-                // アクティビティタイプ選択
-                activityTypeSection
-                
-                // バイブタイプ選択
-                vibeTypeSection
-                
-                // 選択された気分の表示
-                if let mood = currentMood {
-                    selectedMoodDisplay(mood)
+        ZStack {
+            LinearGradient.appBackgroundGradient
+                .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(spacing: 32) {
+                    // ヘッダー情報
+                    headerSection
+                    
+                    // アクティビティタイプ選択
+                    activityTypeSection
+                    
+                    // バイブタイプ選択
+                    vibeTypeSection
+                    
+                    // 選択された気分の表示
+                    if let mood = currentMood {
+                        selectedMoodDisplay(mood)
+                    }
+                    
+                    Spacer(minLength: 20)
+                    
+                    // ナビゲーションボタン（システム提案）
+                    navigationButton
+                    
+                    // AIで提案する（明示ボタン）
+                    aiSuggestionButton
                 }
-                
-                Spacer(minLength: 20)
-                
-                // ナビゲーションボタン（システム提案）
-                navigationButton
-                
-                // AIで提案する（明示ボタン）
-                aiSuggestionButton
+                .padding()
             }
-            .padding()
         }
         .navigationTitle("今の気分は？")
         .navigationBarTitleDisplayMode(.inline)
@@ -38,9 +43,15 @@ struct MoodSelectionView: View {
     
     @ViewBuilder
     private var headerSection: some View {
-        VStack(spacing: 12) {
-            Text("✨")
-                .font(.system(size: 60))
+        VStack(spacing: 20) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(LinearGradient.appHeroGradient)
+                    .frame(width: 100, height: 100)
+                    .shadow(color: Color.appPurpleStart.opacity(0.3), radius: 15, x: 0, y: 15)
+                Text("✨")
+                    .font(.system(size: 40))
+            }
             
             Text("あなたの今の気分を教えてください")
                 .font(.title3)
@@ -143,9 +154,7 @@ struct MoodSelectionView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
         }
-        .padding()
-        .background(Color.appPrimary.opacity(0.08))
-        .cornerRadius(12)
+        .appCard()
     }
     
     @ViewBuilder
@@ -159,13 +168,9 @@ struct MoodSelectionView: View {
                 Image(systemName: "sparkles")
                 Text("寄り道を提案する")
             }
-            .font(.headline)
-            .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .padding()
-            .background(currentMood != nil ? Color.appPrimary : Color.gray)
-            .cornerRadius(12)
         }
+        .buttonStyle(PrimaryButtonStyle())
         .disabled(currentMood == nil)
     }
 
@@ -180,13 +185,9 @@ struct MoodSelectionView: View {
                 Image(systemName: "brain.head.profile")
                 Text("AIで提案する")
             }
-            .font(.subheadline)
-            .foregroundColor(.appPrimary)
             .frame(maxWidth: .infinity)
-            .padding(10)
-            .background(Color.appPrimary.opacity(0.1))
-            .cornerRadius(10)
         }
+        .buttonStyle(SecondaryButtonStyle())
         .disabled(currentMood == nil)
     }
     

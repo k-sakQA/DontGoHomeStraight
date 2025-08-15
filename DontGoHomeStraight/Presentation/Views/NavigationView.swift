@@ -8,27 +8,32 @@ struct NavigationView: View {
     @State private var timeElapsed = 0
     
     var body: some View {
-        VStack(spacing: 24) {
-            // ヘッダー情報
-            headerSection
+        ZStack {
+            LinearGradient.appBackgroundGradient
+                .ignoresSafeArea()
             
-            // 経路情報
-            if let route = viewModel.currentRoute {
-                routeInfoSection(route)
+            VStack(spacing: 24) {
+                // ヘッダー情報
+                headerSection
+                
+                // 経路情報
+                if let route = viewModel.currentRoute {
+                    routeInfoSection(route)
+                }
+                
+                Spacer()
+                
+                // 到着チェック状況
+                arrivalCheckSection
+                
+                // Google Maps起動ボタン
+                googleMapsButton
+                
+                // ホームに戻るボタン
+                homeButton
             }
-            
-            Spacer()
-            
-            // 到着チェック状況
-            arrivalCheckSection
-            
-            // Google Maps起動ボタン
-            googleMapsButton
-            
-            // ホームに戻るボタン
-            homeButton
+            .padding()
         }
-        .padding()
         .navigationTitle("経路案内")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -48,8 +53,14 @@ struct NavigationView: View {
     @ViewBuilder
     private var headerSection: some View {
         VStack(spacing: 16) {
-            Text("🚀")
-                .font(.system(size: 60))
+            ZStack {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(LinearGradient.appHeroGradient)
+                    .frame(width: 100, height: 100)
+                    .shadow(color: Color.appPurpleStart.opacity(0.3), radius: 15, x: 0, y: 15)
+                Text("🚀")
+                    .font(.system(size: 40))
+            }
             
             Text("経路案内開始！")
                 .font(.title2)
@@ -102,9 +113,7 @@ struct NavigationView: View {
                         .cornerRadius(4)
                 }
             }
-            .padding()
-            .background(Color.appPrimary.opacity(0.08))
-            .cornerRadius(12)
+            .appCard()
         }
     }
     
@@ -145,9 +154,7 @@ struct NavigationView: View {
                 }
             }
         }
-        .padding()
-        .background(Color.appSurfaceAlt)
-        .cornerRadius(12)
+        .appCard()
     }
     
     @ViewBuilder
@@ -202,7 +209,11 @@ struct NavigationView: View {
             }
         }
         .padding()
-        .background(Color.appAccent.opacity(0.12))
+        .background(Color.appAccent.opacity(0.1))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.appAccent.opacity(0.3), lineWidth: 1)
+        )
         .cornerRadius(12)
     }
     
@@ -215,13 +226,9 @@ struct NavigationView: View {
                 Image(systemName: "map")
                 Text("Google Maps起動")
             }
-            .font(.headline)
-            .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color.appPrimary)
-            .cornerRadius(12)
         }
+        .buttonStyle(PrimaryButtonStyle())
     }
     
     @ViewBuilder
@@ -230,10 +237,9 @@ struct NavigationView: View {
             viewModel.navigateToHome()
         }) {
             Text("経路案内を終了")
-                .font(.subheadline)
-                .foregroundColor(.red)
-                .underline()
+                .frame(maxWidth: .infinity)
         }
+        .buttonStyle(SecondaryButtonStyle())
     }
     
     // MARK: - Private Methods

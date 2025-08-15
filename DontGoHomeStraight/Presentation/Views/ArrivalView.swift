@@ -7,20 +7,25 @@ struct ArrivalView: View {
     @State private var revealAnimation = false
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // 到着お祝いセクション
-                celebrationSection
-                
-                // スポット情報の表示
-                if let arrivedPlace = viewModel.arrivedPlace {
-                    spotRevealSection(arrivedPlace)
+        ZStack {
+            LinearGradient.appBackgroundGradient
+                .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(spacing: 24) {
+                    // 到着お祝いセクション
+                    celebrationSection
+                    
+                    // スポット情報の表示
+                    if let arrivedPlace = viewModel.arrivedPlace {
+                        spotRevealSection(arrivedPlace)
+                    }
+                    
+                    // 完了ボタン
+                    completionButton
                 }
-                
-                // 完了ボタン
-                completionButton
+                .padding()
             }
-            .padding()
         }
         .navigationTitle("到着！")
         .navigationBarTitleDisplayMode(.inline)
@@ -194,9 +199,7 @@ struct ArrivalView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color.appSurfaceAlt)
-        .cornerRadius(8)
+        .appCard()
     }
     
     @ViewBuilder
@@ -233,9 +236,7 @@ struct ArrivalView: View {
                 }
             }
         }
-        .padding()
-        .background(Color.appPrimary.opacity(0.06))
-        .cornerRadius(12)
+        .appCard()
     }
     
     @ViewBuilder
@@ -272,7 +273,11 @@ struct ArrivalView: View {
                 .lineSpacing(4)
         }
         .padding()
-        .background(Color.appAccent.opacity(0.12))
+        .background(Color.appAccent.opacity(0.1))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.appAccent.opacity(0.3), lineWidth: 1)
+        )
         .cornerRadius(12)
     }
     
@@ -286,13 +291,9 @@ struct ArrivalView: View {
                     Image(systemName: "house.fill")
                     Text("完了")
                 }
-                .font(.headline)
-                .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.appPrimary)
-                .cornerRadius(12)
             }
+            .buttonStyle(PrimaryButtonStyle())
             
             Text("お疲れさまでした！\nまた新しい寄り道をお楽しみください。")
                 .font(.caption)
