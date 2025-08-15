@@ -5,32 +5,42 @@ struct HomeView: View {
     @ObservedObject var viewModel: AppViewModel
     
     var body: some View {
-        VStack(spacing: 30) {
-            Spacer()
+        ZStack {
+            LinearGradient.appBackgroundGradient
+                .ignoresSafeArea()
             
-            // アプリタイトル
-            VStack(spacing: 16) {
-                Text("まっすぐ帰りたくない")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .multilineTextAlignment(.center)
+            VStack(spacing: 30) {
+                Spacer()
                 
-                Text("今日は寄り道してみませんか？")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            
-            // メインアイコン
-            VStack(spacing: 20) {
-                Image(systemName: "map")
-                    .font(.system(size: 80))
-                    .foregroundColor(.blue)
+                // アプリタイトル
+                VStack(spacing: 16) {
+                    Text("まっすぐ帰りたくない")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .multilineTextAlignment(.center)
+                    
+                    Text("今日は寄り道してみませんか？")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
                 
-                Text("🗺️ 今日はどこへ？")
-                    .font(.title2)
-                    .fontWeight(.medium)
-            }
+                // メインアイコン
+                VStack(spacing: 20) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .fill(LinearGradient.appHeroGradient)
+                            .frame(width: 120, height: 120)
+                            .shadow(color: Color.appPurpleStart.opacity(0.3), radius: 20, x: 0, y: 20)
+                        Image(systemName: "map")
+                            .font(.system(size: 52, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    
+                    Text("🗺️ 今日はどこへ？")
+                        .font(.title2)
+                        .fontWeight(.medium)
+                }
             
             Spacer()
             
@@ -47,13 +57,9 @@ struct HomeView: View {
                             Image(systemName: "location")
                             Text("目的地を設定する")
                         }
-                        .font(.headline)
-                        .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(12)
                     }
+                    .buttonStyle(PrimaryButtonStyle())
                     
                     // キャッシュ削除ボタン
                     Button(action: {
@@ -71,13 +77,9 @@ struct HomeView: View {
                             }
                             Text("キャッシュ削除")
                         }
-                        .font(.subheadline)
-                        .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.gray)
-                        .cornerRadius(8)
                     }
+                    .buttonStyle(SecondaryButtonStyle())
                     .disabled(viewModel.isLoading)
                 } else {
                     Button(action: {
@@ -87,19 +89,16 @@ struct HomeView: View {
                             Image(systemName: "location.slash")
                             Text("位置情報を許可する")
                         }
-                        .font(.headline)
-                        .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.orange)
-                        .cornerRadius(12)
                     }
+                    .buttonStyle(PrimaryButtonStyle())
                 }
             }
             
             Spacer()
+            }
+            .padding()
         }
-        .padding()
         .onAppear {
             viewModel.startLocationUpdates()
         }
@@ -122,9 +121,7 @@ struct HomeView: View {
                     .foregroundColor(.secondary)
             }
         }
-        .padding()
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(8)
+        .appCard()
     }
     
     private var locationStatusIcon: String {
@@ -184,7 +181,7 @@ struct LocationPermissionGuideView: View {
         VStack(spacing: 12) {
             Image(systemName: "info.circle")
                 .font(.title)
-                .foregroundColor(.blue)
+                .foregroundColor(.appPrimary)
             
             Text("位置情報について")
                 .font(.headline)
@@ -196,7 +193,7 @@ struct LocationPermissionGuideView: View {
                 .lineLimit(nil)
         }
         .padding()
-        .background(Color.blue.opacity(0.1))
+        .background(Color.appPrimary.opacity(0.1))
         .cornerRadius(12)
     }
 }
@@ -210,7 +207,7 @@ struct AppFeatureView: View {
         HStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(.blue)
+                .foregroundColor(.appPrimary)
                 .frame(width: 30)
             
             VStack(alignment: .leading, spacing: 4) {
@@ -226,7 +223,7 @@ struct AppFeatureView: View {
             Spacer()
         }
         .padding()
-        .background(Color.gray.opacity(0.05))
+        .background(Color.appSurfaceAlt)
         .cornerRadius(8)
     }
 }

@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+
 struct ContentView: View {
     @StateObject private var appViewModel = DependencyContainer.shared.appViewModel
     
@@ -94,7 +95,7 @@ struct ContentView: View {
             VStack(spacing: 16) {
                 ProgressView()
                     .scaleEffect(1.5)
-                    .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                    .progressViewStyle(CircularProgressViewStyle(tint: .appPrimary))
                 
                 Text("処理中...")
                     .font(.subheadline)
@@ -193,8 +194,8 @@ struct AnimatedContentView: View {
                 // 背景グラデーション
                 LinearGradient(
                     gradient: Gradient(colors: [
-                        Color.blue.opacity(0.1),
-                        Color.purple.opacity(0.05)
+                        Color.appPrimary.opacity(0.08),
+                        Color.appAccent.opacity(0.06)
                     ]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -291,7 +292,7 @@ struct AnimatedContentView: View {
             VStack(spacing: 16) {
                 ProgressView()
                     .scaleEffect(1.5)
-                    .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                    .progressViewStyle(CircularProgressViewStyle(tint: .appPrimary))
                 
                 Text("処理中...")
                     .font(.subheadline)

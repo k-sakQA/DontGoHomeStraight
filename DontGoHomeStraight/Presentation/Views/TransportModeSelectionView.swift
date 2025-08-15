@@ -6,19 +6,24 @@ struct TransportModeSelectionView: View {
     @State private var selectedMode: TransportMode?
     
     var body: some View {
-        VStack(spacing: 24) {
-            // ヘッダー情報
-            destinationInfoSection
+        ZStack {
+            LinearGradient.appBackgroundGradient
+                .ignoresSafeArea()
             
-            // 移動手段選択グリッド
-            transportModeGrid
-            
-            Spacer()
-            
-            // ナビゲーションボタン
-            navigationButton
+            VStack(spacing: 24) {
+                // ヘッダー情報
+                destinationInfoSection
+                
+                // 移動手段選択グリッド
+                transportModeGrid
+                
+                Spacer()
+                
+                // ナビゲーションボタン
+                navigationButton
+            }
+            .padding()
         }
-        .padding()
         .navigationTitle("移動手段を選択")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -43,9 +48,7 @@ struct TransportModeSelectionView: View {
                     Spacer()
                 }
             }
-            .padding()
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(12)
+            .appCard()
         }
     }
     
@@ -84,13 +87,9 @@ struct TransportModeSelectionView: View {
                 Image(systemName: "arrow.right")
                 Text("次へ")
             }
-            .font(.headline)
-            .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .padding()
-            .background(selectedMode != nil ? Color.blue : Color.gray)
-            .cornerRadius(12)
         }
+        .buttonStyle(PrimaryButtonStyle())
         .disabled(selectedMode == nil)
     }
 }
@@ -138,22 +137,22 @@ struct TransportModeCard: View {
     
     private var backgroundColor: Color {
         if isSelected {
-            return Color.blue.opacity(0.1)
+            return Color.appPrimary.opacity(0.1)
         } else {
-            return Color.gray.opacity(0.05)
+            return Color.appSurfaceAlt
         }
     }
     
     private var borderColor: Color {
-        isSelected ? .blue : .gray.opacity(0.3)
+        isSelected ? .appPrimary : .gray.opacity(0.3)
     }
     
     private var iconColor: Color {
-        isSelected ? .blue : .primary
+        isSelected ? .appPrimary : .primary
     }
     
     private var textColor: Color {
-        isSelected ? .blue : .primary
+        isSelected ? .appPrimary : .primary
     }
 }
 
@@ -212,7 +211,7 @@ struct EnhancedTransportModeCard: View {
                     
                     if isSelected {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.blue)
+                            .foregroundColor(.appPrimary)
                             .font(.title2)
                     }
                 }
@@ -221,7 +220,7 @@ struct EnhancedTransportModeCard: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(mode.displayName)
                         .font(.headline)
-                        .foregroundColor(isSelected ? .blue : .primary)
+                        .foregroundColor(isSelected ? .appPrimary : .primary)
                     
                     Text(mode.description)
                         .font(.caption)
@@ -255,14 +254,14 @@ struct EnhancedTransportModeCard: View {
     
     private var backgroundColor: Color {
         if isSelected {
-            return Color.blue.opacity(0.1)
+            return Color.appPrimary.opacity(0.1)
         } else {
             return Color.clear
         }
     }
     
     private var borderColor: Color {
-        isSelected ? .blue : .gray.opacity(0.3)
+        isSelected ? .appPrimary : .gray.opacity(0.3)
     }
 }
 
@@ -340,7 +339,7 @@ struct TransportModeSelectionWithEstimatesView: View {
                 }
             }
             .padding()
-            .background(Color.gray.opacity(0.1))
+            .background(Color.appSurfaceAlt)
             .cornerRadius(12)
         }
     }
@@ -360,7 +359,7 @@ struct TransportModeSelectionWithEstimatesView: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(selectedMode != nil ? Color.blue : Color.gray)
+            .background(selectedMode != nil ? Color.appPrimary : Color.gray)
             .cornerRadius(12)
         }
         .disabled(selectedMode == nil)
