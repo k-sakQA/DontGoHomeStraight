@@ -40,7 +40,7 @@ struct PlaceHintInput {
 	let spotName: String
 	let category: GenreCategory
 	let isIndoor: Bool
-	let vibe: Mood.VibeType
+	let vibe: VibeType
 	let transportMode: TransportMode
 }
 

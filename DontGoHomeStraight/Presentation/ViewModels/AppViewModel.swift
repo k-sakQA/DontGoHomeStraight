@@ -434,6 +434,16 @@ class MockAIRecommendationRepository: AIRecommendationRepository {
     func validateRecommendation(spotName: String, location: CLLocationCoordinate2D) async throws -> Bool {
         return true
     }
+    
+    func generateHint(for place: PlaceHintInput) async throws -> String {
+        // モック実装：適当なヒントを返す
+        switch place.category {
+        case .restaurant:
+            return "美味しいコーヒーと落ち着いた雰囲気"
+        case .other:
+            return "緑豊かな都会のオアシス"
+        }
+    }
 }
 
 class MockPlaceRepository: PlaceRepository {
