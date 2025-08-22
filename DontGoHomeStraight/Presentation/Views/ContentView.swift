@@ -34,6 +34,8 @@ struct ContentView: View {
     @ViewBuilder
     private var mainContent: some View {
         switch appViewModel.currentScreen {
+        case .landing:
+            LandingView(viewModel: appViewModel)
         case .home:
             HomeView(viewModel: appViewModel)
         case .destinationSetting:
@@ -205,6 +207,9 @@ struct AnimatedContentView: View {
                 // メインコンテンツ
                 Group {
                     switch appViewModel.currentScreen {
+                    case .landing:
+                        LandingView(viewModel: appViewModel)
+                            .transition(.fadeScale)
                     case .home:
                         HomeView(viewModel: appViewModel)
                             .transition(.fadeScale)

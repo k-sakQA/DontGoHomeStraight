@@ -12,27 +12,24 @@ struct NavigationView: View {
             LinearGradient.appBackgroundGradient
                 .ignoresSafeArea()
             
-            VStack(spacing: 24) {
-                // ヘッダー情報
-                headerSection
-                
-                // 経路情報
-                if let route = viewModel.currentRoute {
-                    routeInfoSection(route)
+            ScrollView {
+                VStack(spacing: 24) {
+                    // ヘッダー情報
+                    headerSection
+                    
+                    // 経路情報
+                    if let route = viewModel.currentRoute {
+                        routeInfoCard(route)
+                    }
+                    
+                    // 到着チェック状況
+                    arrivalCheckCard
+                    
+                    // アクションボタン
+                    actionButtons
                 }
-                
-                Spacer()
-                
-                // 到着チェック状況
-                arrivalCheckSection
-                
-                // Google Maps起動ボタン
-                googleMapsButton
-                
-                // ホームに戻るボタン
-                homeButton
+                .padding()
             }
-            .padding()
         }
         .navigationTitle("経路案内")
         .navigationBarTitleDisplayMode(.inline)
@@ -52,35 +49,105 @@ struct NavigationView: View {
     
     @ViewBuilder
     private var headerSection: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(LinearGradient.appHeroGradient)
-                    .frame(width: 100, height: 100)
-                    .shadow(color: Color.appPurpleStart.opacity(0.3), radius: 15, x: 0, y: 15)
-                Text("🚀")
-                    .font(.system(size: 40))
-            }
-            
+        VStack(spacing: 12) {
             Text("経路案内開始！")
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(Color(hex: "212529"))
             
-            Text("Google Mapsアプリで\nナビゲーションが開始されます")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+            Text("Google Mapsアプリでナビゲーションが開始されます")
+                .font(.system(size: 14))
+                .foregroundColor(Color(hex: "6C757D"))
                 .multilineTextAlignment(.center)
         }
     }
     
     @ViewBuilder
-    private func routeInfoSection(_ route: NavigationRoute) -> some View {
+    private func routeInfoCard(_ route: NavigationRoute) -> some View {
         VStack(spacing: 16) {
             // 選択されたジャンル
-            selectedGenreCard
+            if let selectedGenre = viewModel.selectedGenre {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("選択した寄り道")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(hex: "6C757D"))
+                    
+                    HStack(spacing: 12) {
+                        // マスクされたスポット名
+                        Text("＊＊＊＊＊＊＊＊")
+                            .font(.system(size: 20, weight: .heavy))
+                            .foregroundColor(Color(hex: "0D1B3A"))
+                        
+                        Spacer()
+                        
+                        Text(selectedGenre.category.displayName)
+                            .font(.system(size: 12))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(selectedGenre.category == .restaurant ? Color(hex: "FFC107").opacity(0.18) : Color(hex: "3A7DFF").opacity(0.18))
+                            .cornerRadius(4)
+                    }
+                    
+                    if let hint = selectedGenre.hint {
+                        Text("ヒント：" + hint)
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: "4B5563"))
+                    }
+                }
+                .appCard()
+            }
             
             // 経路詳細
-            routeDetailsCard(route)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("経路情報")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(hex: "6C757D"))
+                
+                VStack(spacing: 10) {
+                    HStack {
+                        Image(systemName: route.transportMode.icon)
+                            .foregroundColor(Color(hex: "3A7DFF"))
+                            .frame(width: 20)
+                        Text("移動手段")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: "6C757D"))
+                        Spacer()
+                        Text(route.transportMode.displayName)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(Color(hex: "212529"))
+                    }
+                    
+                    if route.totalDistance > 0 {
+                        HStack {
+                            Image(systemName: "ruler")
+                                .foregroundColor(.green)
+                                .frame(width: 20)
+                            Text("総距離")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: "6C757D"))
+                            Spacer()
+                            Text(route.formattedDistance)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(Color(hex: "212529"))
+                        }
+                    }
+                    
+                    if route.estimatedDuration > 0 {
+                        HStack {
+                            Image(systemName: "clock")
+                                .foregroundColor(Color(hex: "FFC107"))
+                                .frame(width: 20)
+                            Text("予想時間")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: "6C757D"))
+                            Spacer()
+                            Text(route.formattedDuration)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(Color(hex: "212529"))
+                        }
+                    }
+                }
+            }
+            .appCard()
         }
     }
     
@@ -176,21 +243,21 @@ struct NavigationView: View {
     }
     
     @ViewBuilder
-    private var arrivalCheckSection: some View {
+    private var arrivalCheckCard: some View {
         VStack(spacing: 12) {
             HStack {
                 Image(systemName: "target")
-                    .foregroundColor(.appPrimary)
+                    .foregroundColor(Color(hex: "3A7DFF"))
                     .font(.title2)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("🎯 到着をお待ちください")
-                        .font(.headline)
-                        .fontWeight(.medium)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(Color(hex: "212529"))
                     
                     Text("経由地に近づくと自動で検知します")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: "6C757D"))
                 }
                 
                 Spacer()
@@ -199,47 +266,46 @@ struct NavigationView: View {
             // 経過時間
             HStack {
                 Image(systemName: "timer")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color(hex: "6C757D"))
                 
                 Text("経過時間: \(formatElapsedTime(timeElapsed))")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "6C757D"))
                 
                 Spacer()
             }
         }
-        .padding()
-        .background(Color.appAccent.opacity(0.1))
+        .padding(18)
+        .background(Color(hex: "FFC107").opacity(0.1))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.appAccent.opacity(0.3), lineWidth: 1)
+                .stroke(Color(hex: "FFC107").opacity(0.3), lineWidth: 1)
         )
         .cornerRadius(12)
     }
     
     @ViewBuilder
-    private var googleMapsButton: some View {
-        Button(action: {
-            openGoogleMaps()
-        }) {
-            HStack {
-                Image(systemName: "map")
-                Text("Google Maps起動")
-            }
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(PrimaryButtonStyle())
-    }
-    
-    @ViewBuilder
-    private var homeButton: some View {
-        Button(action: {
-            viewModel.navigateToHome()
-        }) {
-            Text("経路案内を終了")
+    private var actionButtons: some View {
+        VStack(spacing: 12) {
+            Button(action: {
+                openGoogleMaps()
+            }) {
+                HStack {
+                    Image(systemName: "map")
+                    Text("Google Maps起動")
+                }
                 .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            
+            Button(action: {
+                viewModel.navigateToHome()
+            }) {
+                Text("経路案内を終了")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(SecondaryButtonStyle())
         }
-        .buttonStyle(SecondaryButtonStyle())
     }
     
     // MARK: - Private Methods

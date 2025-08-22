@@ -9,26 +9,26 @@ struct GenreSelectionView: View {
             LinearGradient.appBackgroundGradient
                 .ignoresSafeArea()
             
-            VStack(spacing: 24) {
-                // ローディング状態
-                if viewModel.isLoading {
-                    loadingView
-                } else {
-                    // ヘッダー情報
-                    headerSection
-                    
-                    // ジャンル選択
-                    genreSelectionSection
-                    
-                    Spacer()
-                    
-                    // ナビゲーションボタン
-                    navigationButton
+            ScrollView {
+                VStack(spacing: 24) {
+                    // ローディング状態
+                    if viewModel.isLoading {
+                        loadingView
+                    } else {
+                        // ヘッダー情報
+                        headerSection
+                        
+                        // 寄り道カード
+                        genreCardsSection
+                        
+                        // ナビ開始について
+                        navigationInfoCard
+                    }
                 }
+                .padding()
             }
-            .padding()
         }
-        .navigationTitle("どのジャンルにする？")
+        .navigationTitle("寄り道を選択")
         .navigationBarTitleDisplayMode(.inline)
     }
     
@@ -58,64 +58,32 @@ struct GenreSelectionView: View {
     @ViewBuilder
     private var headerSection: some View {
         VStack(spacing: 16) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(LinearGradient.appHeroGradient)
-                    .frame(width: 80, height: 80)
-                    .shadow(color: Color.appPurpleStart.opacity(0.3), radius: 12, x: 0, y: 12)
-                Text("🎯")
-                    .font(.system(size: 30))
-            }
-            
             Text("寄り道の提案ができました！")
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(Color(hex: "212529"))
             
-            Text("どのジャンルの場所に寄り道しますか？")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-            
-            // 重要な注意事項
-            importantNoticeView
+            Text("どの寄り道を選びますか？")
+                .font(.system(size: 14))
+                .foregroundColor(Color(hex: "6C757D"))
         }
     }
     
-    @ViewBuilder
-    private var importantNoticeView: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "eye.slash.fill")
-                .foregroundColor(.appAccent)
-            
-            Text("※スポット名は到着まで秘密！")
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundColor(.appAccent)
-        }
-        .padding(12)
-        .background(Color.appAccent.opacity(0.1))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.appAccent.opacity(0.3), lineWidth: 1)
-        )
-        .cornerRadius(8)
-    }
+
     
     @ViewBuilder
-    private var genreSelectionSection: some View {
+    private var genreCardsSection: some View {
         if viewModel.recommendedGenres.isEmpty {
             emptyStateView
         } else {
             VStack(spacing: 16) {
-                ForEach(Array(viewModel.recommendedGenres.enumerated()), id: \.element.id) { index, genre in
-                    GenreCard(
+                ForEach(Array(viewModel.recommendedGenres.prefix(3).enumerated()), id: \.element.id) { index, genre in
+                    ModernGenreCard(
                         genre: genre,
-                        index: index + 1,
-                        isSelected: selectedGenre?.id == genre.id,
+                        duration: estimatedDuration(for: genre),
                         onTap: {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                selectedGenre = genre
-                            }
+                            selectedGenre = genre
+                            viewModel.setSelectedGenre(genre)
+                            viewModel.navigateToNavigation()
                         }
                     )
                 }
@@ -147,27 +115,83 @@ struct GenreSelectionView: View {
     }
     
     @ViewBuilder
-    private var navigationButton: some View {
-        VStack(spacing: 12) {
-            Button(action: {
-                guard let selectedGenre = selectedGenre else { return }
-                viewModel.setSelectedGenre(selectedGenre)
-                viewModel.navigateToNavigation()
-            }) {
-                HStack {
-                    Image(systemName: "location.fill")
-                    Text("ここに決定！")
-                }
-                .frame(maxWidth: .infinity)
+    private var navigationInfoCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("ナビ開始について")
+                .font(.system(size: 14))
+                .foregroundColor(Color(hex: "6C757D"))
+            
+            Text("選択後は Google マップで経路案内へ。スポット名は伏せたまま、到着 50m 手前でアプリに戻って種明かしを表示します。")
+                .font(.system(size: 14))
+                .foregroundColor(Color(hex: "6C757D"))
+                .lineSpacing(4)
+        }
+        .appCard()
+    }
+    
+    private func estimatedDuration(for genre: Genre) -> String {
+        // 簡易的にジャンルごとの時間を返す
+        switch genre.category {
+        case .restaurant:
+            return "~18分"
+        case .other:
+            return "~15分"
+        }
+    }
+}
+
+// MARK: - Modern Genre Card
+
+struct ModernGenreCard: View {
+    let genre: Genre
+    let duration: String
+    let onTap: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 8) {
+                // 時間バッジ
+                Text(duration)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(Color(hex: "3A7DFF"))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 999)
+                            .stroke(Color(hex: "DCE7FF"), lineWidth: 1)
+                    )
+                    .cornerRadius(999)
+                
+                // マスクされた名前
+                Text("＊＊＊＊＊＊＊＊")
+                    .font(.system(size: 28, weight: .heavy))
+                    .foregroundColor(Color(hex: "0D1B3A"))
+                    .tracking(0.04)
+                
+                // ヒント
+                Text("ヒント：" + (genre.hint ?? genre.description))
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "4B5563"))
+                    .lineLimit(2)
+            }
+            
+            Button(action: onTap) {
+                Text("この寄り道を選ぶ")
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle())
-            .disabled(selectedGenre == nil)
-            
-            Text("選択したジャンルの場所へ\nGoogle Mapsでナビゲーションを開始します")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
         }
+        .padding(18)
+        .background(
+            LinearGradient(
+                colors: [Color(hex: "EDF3FF"), Color(hex: "E6EEFF")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .cornerRadius(20)
+        .shadow(color: .black.opacity(0.08), radius: 25, x: 0, y: 10)
     }
 }
 

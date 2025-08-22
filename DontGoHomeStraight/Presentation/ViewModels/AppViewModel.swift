@@ -8,7 +8,7 @@ class AppViewModel: ObservableObject {
     
     // MARK: - Published Properties
     
-    @Published var currentScreen: AppScreen = .home
+    @Published var currentScreen: AppScreen = .landing
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var showError = false
@@ -366,6 +366,7 @@ class AppViewModel: ObservableObject {
 // MARK: - App Screen Enum
 
 enum AppScreen: CaseIterable {
+    case landing
     case home
     case destinationSetting
     case transportModeSelection
@@ -376,7 +377,8 @@ enum AppScreen: CaseIterable {
     
     var title: String {
         switch self {
-        case .home: return "まっすぐ帰りたくない"
+        case .landing: return "まっすぐ帰りたくない"
+        case .home: return "設定"
         case .destinationSetting: return "目的地を設定"
         case .transportModeSelection: return "移動手段を選択"
         case .moodSelection: return "今の気分は？"

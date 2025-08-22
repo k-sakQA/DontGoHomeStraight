@@ -55,18 +55,18 @@ struct SecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline)
-            .foregroundColor(.white)
+            .foregroundColor(Color(hex: "212529"))
             .frame(maxWidth: .infinity)
             .padding(14)
             .background(
-                Color.black.opacity(configuration.isPressed ? 0.35 : 0.25)
+                Color.white.opacity(configuration.isPressed ? 0.95 : 1.0)
             )
-            .cornerRadius(12)
+            .cornerRadius(14)
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color(hex: "E9EDF3"), lineWidth: 1)
             )
-            .shadow(color: .black.opacity(configuration.isPressed ? 0.06 : 0.12), radius: configuration.isPressed ? 3 : 6, x: 0, y: configuration.isPressed ? 1 : 3)
+            .shadow(color: .black.opacity(configuration.isPressed ? 0.02 : 0.04), radius: configuration.isPressed ? 2 : 4, x: 0, y: configuration.isPressed ? 1 : 2)
             .scaleEffect(configuration.isPressed ? 0.99 : 1.0)
             .animation(.spring(response: 0.25, dampingFraction: 0.9), value: configuration.isPressed)
     }
@@ -77,16 +77,62 @@ struct SecondaryButtonStyle: ButtonStyle {
 struct AppCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .padding()
-            .background(Color.white.opacity(0.95))
-            .cornerRadius(16)
-            .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 6)
+            .padding(18)
+            .background(Color.white)
+            .cornerRadius(18)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(Color(hex: "E9EDF3"), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.08), radius: 25, x: 0, y: 10)
     }
 }
 
 extension View {
     func appCard() -> some View {
         self.modifier(AppCardModifier())
+    }
+}
+
+// MARK: - Chip Style
+
+struct ChipStyle: ButtonStyle {
+    let isSelected: Bool
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundColor(isSelected ? .white : Color(hex: "2E3238"))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(isSelected ? Color(hex: "3A7DFF") : Color.white)
+            .cornerRadius(999)
+            .overlay(
+                RoundedRectangle(cornerRadius: 999)
+                    .stroke(isSelected ? Color.clear : Color(hex: "E9EDF3"), lineWidth: 1)
+            )
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.8), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Tab Style
+
+struct TabStyle: ButtonStyle {
+    let isSelected: Bool
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundColor(isSelected ? Color(hex: "3A7DFF") : Color(hex: "212529"))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 14)
+            .background(isSelected ? Color.white : Color.clear)
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(isSelected ? 0.08 : 0), radius: isSelected ? 10 : 0, x: 0, y: isSelected ? 5 : 0)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.8), value: configuration.isPressed)
     }
 }
 

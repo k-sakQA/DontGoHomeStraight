@@ -3,76 +3,38 @@ import CoreLocation
 
 struct HomeView: View {
     @ObservedObject var viewModel: AppViewModel
+    @State private var destinationText = ""
+    @State private var selectedTransport: TransportMode = .driving
+    @State private var selectedInOut: ActivityType = .indoor
+    @State private var selectedVibe: VibeType = .discovery
+    @State private var useAI = false
     
     var body: some View {
         ZStack {
-            Color(uiColor: .systemBackground)
+            LinearGradient.appBackgroundGradient
                 .ignoresSafeArea()
             
-            VStack(spacing: 32) {
-                Spacer()
-                
-                // アプリタイトル
-                VStack(spacing: 16) {
-                    Text("まっすぐ帰りたくない")
-                        .font(AppFont.navigationTitle)
-                        .foregroundColor(.primary)
-                        .multilineTextAlignment(.center)
+            ScrollView {
+                VStack(spacing: 24) {
+                    // ヘッダー
+                    headerSection
                     
-                    Text("今日は寄り道してみませんか？")
-                        .font(AppFont.body)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                
-                // メインロゴ
-                VStack(spacing: 20) {
-                    LogoView(size: 120)
+                    // フォームカード
+                    VStack(spacing: 16) {
+                        // 現在地・目的地カード
+                        locationCard
+                        
+                        // 設定カード
+                        settingsCard
+                    }
                     
-                    Text("🗺️ 今日はどこへ？")
-                        .font(AppFont.heading)
-                        .foregroundColor(.brandPrimary)
-                }
-            
-            Spacer()
-            
-            // 位置情報状態表示
-            locationStatusView
-            
-            // メインボタン
-            VStack(spacing: 16) {
-                if viewModel.isLocationAvailable {
-                    BrandButton.primary(
-                        title: "目的地を設定する",
-                        action: {
-                            viewModel.navigateToDestinationSetting()
-                        }
-                    )
+                    // 提案エンジンカード
+                    engineCard
                     
-                    // キャッシュ削除ボタン
-                    BrandButton.secondary(
-                        title: "キャッシュ削除",
-                        isLoading: viewModel.isLoading,
-                        isEnabled: !viewModel.isLoading,
-                        action: {
-                            Task {
-                                await viewModel.clearRecommendationCache()
-                            }
-                        }
-                    )
-                } else {
-                    BrandButton.primary(
-                        title: "位置情報を許可する",
-                        action: {
-                            viewModel.requestLocationPermission()
-                        }
-                    )
+                    Spacer(minLength: 50)
                 }
+                .padding()
             }
-            
-            Spacer()
-            }
-            .padding()
         }
         .onAppear {
             viewModel.startLocationUpdates()
@@ -80,66 +42,220 @@ struct HomeView: View {
     }
     
     @ViewBuilder
-    private var locationStatusView: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Image(systemName: locationStatusIcon)
-                    .foregroundColor(locationStatusColor)
-                Text(locationStatusText)
-                    .font(AppFont.body)
-                    .foregroundColor(.secondary)
+    private var headerSection: some View {
+        HStack(spacing: 16) {
+            // ロゴ
+            LogoView(size: 44)
+                .background(
+                    LinearGradient(
+                        colors: [Color(hex: "3A7DFF"), Color(hex: "6AA9FF")],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .cornerRadius(12)
+                .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 5)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("まっすぐ帰りたくない")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(Color(hex: "212529"))
+                
+                Text("今日は寄り道してみませんか？")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "6C757D"))
             }
             
-            if let currentLocation = viewModel.currentLocation {
-                Text("現在地: \(formatCoordinate(currentLocation))")
-                    .font(AppFont.footnote)
-                    .foregroundColor(.secondary)
+            Spacer()
+        }
+    }
+    
+    @ViewBuilder
+    private var locationCard: some View {
+        HStack(spacing: 16) {
+            VStack(spacing: 12) {
+                // 現在地
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("現在地")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(hex: "6C757D"))
+                    
+                    HStack {
+                        TextField(
+                            "位置情報を取得中...",
+                            text: .constant(locationDisplayText)
+                        )
+                        .disabled(true)
+                        .textFieldStyle(ModernTextFieldStyle())
+                    }
+                }
+                
+                // 目的地
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("目的地")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(hex: "6C757D"))
+                    
+                    TextField(
+                        "例）長野駅 ／ 住所を入力",
+                        text: $destinationText
+                    )
+                    .textFieldStyle(ModernTextFieldStyle())
+                    .disabled(!viewModel.isLocationAvailable)
+                }
             }
         }
         .appCard()
     }
     
-    private var locationStatusIcon: String {
-        switch viewModel.locationPermissionStatus {
-        case .authorizedWhenInUse, .authorizedAlways:
-            return viewModel.isLocationAvailable ? "location.fill" : "location"
-        case .denied, .restricted:
-            return "location.slash"
-        case .notDetermined:
-            return "location"
-        @unknown default:
-            return "location"
+    @ViewBuilder
+    private var settingsCard: some View {
+        VStack(spacing: 16) {
+            // 移動手段
+            VStack(alignment: .leading, spacing: 8) {
+                Text("移動手段")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(hex: "6C757D"))
+                
+                HStack(spacing: 10) {
+                    ForEach(TransportMode.allCases, id: \.self) { mode in
+                        Button(action: { selectedTransport = mode }) {
+                            Text(mode.displayName)
+                        }
+                        .buttonStyle(ChipStyle(isSelected: selectedTransport == mode))
+                    }
+                }
+            }
+            
+            // 屋内・屋外
+            VStack(alignment: .leading, spacing: 8) {
+                Text("屋内 / 屋外")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(hex: "6C757D"))
+                
+                HStack(spacing: 10) {
+                    ForEach(ActivityType.allCases, id: \.self) { type in
+                        Button(action: { selectedInOut = type }) {
+                            Text(type.displayName)
+                        }
+                        .buttonStyle(ChipStyle(isSelected: selectedInOut == type))
+                    }
+                }
+            }
+            
+            // 気分
+            VStack(alignment: .leading, spacing: 8) {
+                Text("気分")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(hex: "6C757D"))
+                
+                HStack(spacing: 10) {
+                    ForEach(VibeType.allCases, id: \.self) { vibe in
+                        Button(action: { selectedVibe = vibe }) {
+                            Text(vibe.displayName)
+                        }
+                        .buttonStyle(ChipStyle(isSelected: selectedVibe == vibe))
+                    }
+                }
+            }
+        }
+        .appCard()
+    }
+    
+    @ViewBuilder
+    private var engineCard: some View {
+        VStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("提案エンジン")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(hex: "6C757D"))
+                
+                Menu {
+                    Button("Google Maps API") { useAI = false }
+                    Button("AI") { useAI = true }
+                } label: {
+                    HStack {
+                        Text(useAI ? "AI" : "Google Maps API")
+                            .foregroundColor(Color(hex: "212529"))
+                        Spacer()
+                        Image(systemName: "chevron.down")
+                            .foregroundColor(Color(hex: "6C757D"))
+                    }
+                    .padding(14)
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color(hex: "E9EDF3"), lineWidth: 1)
+                    )
+                }
+            }
+            
+            // メインボタン
+            Button(action: startJourney) {
+                Text("寄り道を3つ提案する")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .disabled(!canStartJourney)
+        }
+        .appCard()
+    }
+    
+    private var locationDisplayText: String {
+        if viewModel.isLocationAvailable {
+            if let location = viewModel.currentLocation {
+                return "現在地（取得済み）"
+            }
+            return "位置情報を取得中..."
+        } else {
+            return "位置情報が利用できません"
         }
     }
     
-    private var locationStatusColor: Color {
-        switch viewModel.locationPermissionStatus {
-        case .authorizedWhenInUse, .authorizedAlways:
-            return viewModel.isLocationAvailable ? .green : .orange
-        case .denied, .restricted:
-            return .red
-        case .notDetermined:
-            return .gray
-        @unknown default:
-            return .gray
-        }
+    private var canStartJourney: Bool {
+        viewModel.isLocationAvailable && !destinationText.isEmpty
     }
     
-    private var locationStatusText: String {
-        switch viewModel.locationPermissionStatus {
-        case .authorizedWhenInUse, .authorizedAlways:
-            return viewModel.isLocationAvailable ? "位置情報取得中" : "位置情報を取得しています..."
-        case .denied, .restricted:
-            return "位置情報が拒否されています"
-        case .notDetermined:
-            return "位置情報の許可が必要です"
-        @unknown default:
-            return "位置情報の状態を確認中"
+    private func startJourney() {
+        guard canStartJourney else { return }
+        
+        // 目的地を設定
+        let destination = Destination(
+            name: destinationText,
+            coordinate: CLLocationCoordinate2D(latitude: 0, longitude: 0), // 後でジオコーディング
+            address: destinationText
+        )
+        viewModel.setDestination(destination)
+        viewModel.setTransportMode(selectedTransport)
+        viewModel.setMood(Mood(activityType: selectedInOut, vibeType: selectedVibe))
+        
+        // 次の画面へ
+        if useAI {
+            viewModel.navigateToGenreSelectionAI()
+        } else {
+            viewModel.navigateToGenreSelection()
         }
     }
     
     private func formatCoordinate(_ coordinate: CLLocationCoordinate2D) -> String {
         return String(format: "%.4f, %.4f", coordinate.latitude, coordinate.longitude)
+    }
+}
+
+// MARK: - Modern Text Field Style
+
+struct ModernTextFieldStyle: TextFieldStyle {
+    func _body(configuration: TextField<Self._Label>) -> some View {
+        configuration
+            .padding(14)
+            .background(Color.white)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color(hex: "E9EDF3"), lineWidth: 1)
+            )
+            .font(.system(size: 16))
     }
 }
 

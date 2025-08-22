@@ -13,21 +13,18 @@ struct ArrivalView: View {
             
             ScrollView {
                 VStack(spacing: 24) {
-                    // 到着お祝いセクション
-                    celebrationSection
-                    
                     // スポット情報の表示
                     if let arrivedPlace = viewModel.arrivedPlace {
-                        spotRevealSection(arrivedPlace)
+                        spotRevealCard(arrivedPlace)
                     }
                     
-                    // 完了ボタン
-                    completionButton
+                    // アクションボタン
+                    actionButtons
                 }
                 .padding()
             }
         }
-        .navigationTitle("到着！")
+        .navigationTitle("スポットに到着")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .onAppear {
@@ -35,270 +32,122 @@ struct ArrivalView: View {
         }
     }
     
-    @ViewBuilder
-    private var celebrationSection: some View {
-        VStack(spacing: 20) {
-            // アニメーション付きお祝いアイコン
-            ZStack {
-                if showConfetti {
-                    ConfettiView()
-                }
-                
-                Text("🎉")
-                    .font(.system(size: 80))
-                    .scaleEffect(revealAnimation ? 1.2 : 1.0)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.8), value: revealAnimation)
-            }
-            
-            VStack(spacing: 8) {
-                Text("到着しました！")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(.appPrimary)
-                
-                Text("お疲れさまでした")
-                    .font(.title3)
-                    .foregroundColor(.secondary)
-            }
-            .opacity(revealAnimation ? 1.0 : 0.0)
-            .animation(.easeInOut(duration: 0.8).delay(0.3), value: revealAnimation)
-        }
-    }
+
     
     @ViewBuilder
-    private func spotRevealSection(_ place: Place) -> some View {
-        VStack(spacing: 20) {
-            // 「今回の寄り道先は」メッセージ
-            revealMessageSection
-            
-            // スポット詳細カード
-            spotDetailCard(place)
-            
-            // 追加情報
-            if let route = viewModel.currentRoute {
-                journeySummaryCard(route)
-            }
-            
-            // 励ましメッセージ
-            encouragementSection
-        }
-        .opacity(revealAnimation ? 1.0 : 0.0)
-        .animation(.easeInOut(duration: 1.0).delay(0.6), value: revealAnimation)
-    }
-    
-    @ViewBuilder
-    private var revealMessageSection: some View {
-        VStack(spacing: 8) {
-            Text("今回の寄り道先は")
-                .font(.title2)
-                .fontWeight(.medium)
-                .foregroundColor(.secondary)
-            
-            Text("✨ 秘密の場所が明らかに！ ✨")
-                .font(.subheadline)
-                .foregroundColor(.orange)
-                .fontWeight(.semibold)
-        }
-        .multilineTextAlignment(.center)
-    }
-    
-    @ViewBuilder
-    private func spotDetailCard(_ place: Place) -> some View {
+    private func spotRevealCard(_ place: Place) -> some View {
         VStack(spacing: 16) {
-            // スポット名（メインの発表）
-            VStack(spacing: 8) {
-                Text(place.genre.category.emoji)
-                    .font(.system(size: 40))
-                
-                Text(place.name)
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.primary)
-                
-                if !place.address.isEmpty {
-                    Text(place.address)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                place.genre.category == .restaurant ? Color.appAccent.opacity(0.12) : Color.appPrimary.opacity(0.10),
-                                place.genre.category == .restaurant ? Color.red.opacity(0.10) : Color.appAccent.opacity(0.08)
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(place.genre.category == .restaurant ? Color.appAccent : Color.appPrimary, lineWidth: 2)
-                    )
-            )
+            // ヒーロー画像セクション
+            heroImageSection(place)
             
-            // スポット詳細情報
-            spotDetailsGrid(place)
-        }
-    }
-    
-    @ViewBuilder
-    private func spotDetailsGrid(_ place: Place) -> some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
-            spotDetailItem(
-                icon: "tag.fill",
-                label: "ジャンル",
-                value: place.genre.name,
-                color: .appPrimary
-            )
+            // スポット情報
+            spotInfoSection(place)
             
-            spotDetailItem(
-                icon: "star.fill",
-                label: "評価",
-                value: place.displayRating,
-                color: .yellow
-            )
-            
-            if let priceLevel = place.priceLevel, priceLevel > 0 {
-                spotDetailItem(
-                    icon: "yensign.circle.fill",
-                    label: "価格帯",
-                    value: place.displayPriceLevel,
-                    color: .green
-                )
-            }
-            
-            spotDetailItem(
-                icon: "clock.fill",
-                label: "営業状況",
-                value: place.openStatusText,
-                color: place.isOpen == true ? .green : .red
-            )
-        }
-    }
-    
-    @ViewBuilder
-    private func spotDetailItem(icon: String, label: String, value: String, color: Color) -> some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon)
-                .foregroundColor(color)
-                .font(.title3)
-            
-            Text(label)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .appCard()
-    }
-    
-    @ViewBuilder
-    private func journeySummaryCard(_ route: NavigationRoute) -> some View {
-        VStack(spacing: 12) {
-            HStack {
-                Text("今回の旅の記録")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                Spacer()
-            }
-            
-            VStack(spacing: 8) {
-                journeyDetailRow(
-                    icon: "figure.walk",
-                    label: "移動手段",
-                    value: route.transportMode.displayName
-                )
-                
-                if route.totalDistance > 0 {
-                    journeyDetailRow(
-                        icon: "ruler",
-                        label: "移動距離",
-                        value: route.formattedDistance
-                    )
-                }
-                
-                if let mood = viewModel.selectedMood {
-                    journeyDetailRow(
-                        icon: "heart.fill",
-                        label: "選んだ気分",
-                        value: mood.description
-                    )
-                }
-            }
+            // 説明文
+            descriptionSection(place)
         }
         .appCard()
+        .opacity(revealAnimation ? 1.0 : 0.0)
+        .animation(.easeInOut(duration: 0.8).delay(0.3), value: revealAnimation)
     }
     
     @ViewBuilder
-    private func journeyDetailRow(icon: String, label: String, value: String) -> some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundColor(.appPrimary)
-                .frame(width: 20)
-            
-            Text(label)
-                .font(.subheadline)
-            
-            Spacer()
-            
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.secondary)
+    private func heroImageSection(_ place: Place) -> some View {
+        ZStack {
+            // プレースホルダー背景
+            RoundedRectangle(cornerRadius: 22)
+                .fill(place.genre.category == .restaurant ? Color(hex: "FFC107").opacity(0.3) : Color(hex: "C5D9FF"))
+                .frame(height: 240)
+                .overlay(
+                    VStack {
+                        Spacer()
+                        Text(place.genre.category.emoji)
+                            .font(.system(size: 80))
+                        Spacer()
+                    }
+                )
+                .clipped()
         }
     }
     
     @ViewBuilder
-    private var encouragementSection: some View {
-        VStack(spacing: 12) {
-            Text("🌟 素敵な寄り道を！ 🌟")
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(.appAccent)
+    private func spotInfoSection(_ place: Place) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("ここは「\(place.name)」でした！")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(Color(hex: "212529"))
             
-            Text("新しい発見はありましたか？\nまた次回もお楽しみください。")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+            HStack(spacing: 12) {
+                Text(place.genre.name)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "6C757D"))
+                
+                if let rating = place.rating, rating > 0 {
+                    Text("評価 \(place.displayRating)")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: "6C757D"))
+                }
+                
+                if place.isOpen == true {
+                    Text("屋外")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: "6C757D"))
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func descriptionSection(_ place: Place) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(getPlaceDescription(place))
+                .font(.system(size: 14))
+                .foregroundColor(Color(hex: "6C757D"))
                 .lineSpacing(4)
         }
-        .padding()
-        .background(Color.appAccent.opacity(0.1))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.appAccent.opacity(0.3), lineWidth: 1)
-        )
-        .cornerRadius(12)
     }
     
+
+    
+
+    
     @ViewBuilder
-    private var completionButton: some View {
-        VStack(spacing: 16) {
+    private var actionButtons: some View {
+        VStack(spacing: 10) {
             Button(action: {
-                viewModel.navigateToHome()
+                // シェア機能（後で実装）
             }) {
-                HStack {
-                    Image(systemName: "house.fill")
-                    Text("完了")
-                }
-                .frame(maxWidth: .infinity)
+                Text("思い出をシェア")
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle())
             
-            Text("お疲れさまでした！\nまた新しい寄り道をお楽しみください。")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+            Button(action: {
+                viewModel.navigateToHome()
+            }) {
+                Text("もう一度提案を受ける")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(SecondaryButtonStyle())
+        }
+    }
+    
+    private func getPlaceDescription(_ place: Place) -> String {
+        switch place.genre.category {
+        case .restaurant:
+            if place.genre.name.contains("カフェ") {
+                return "美味しいコーヒーと落ち着いた雰囲気。寄り道の疲れをリフレッシュするひとときを。"
+            } else {
+                return "地元の人々に愛されるグルメスポット。新しい味覚の発見を楽しんでください。"
+            }
+        case .other:
+            if place.genre.name.contains("公園") {
+                return "自然豊かでリラックスできる場所。歩き疲れた足を休めて、季節の風景を楽しんでみてはいかがでしょうか。"
+            } else if place.genre.name.contains("美術館") || place.genre.name.contains("博物館") {
+                return "文化的な発見と学びがある場所。静かな空間でアートや歴史に触れる特別な時間を。"
+            } else {
+                return "地元の人々に愛される特別な場所。新しい発見や体験があなたを待っています。"
+            }
         }
     }
     
