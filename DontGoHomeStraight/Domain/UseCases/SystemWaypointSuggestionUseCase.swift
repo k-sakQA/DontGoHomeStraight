@@ -25,17 +25,20 @@ final class SystemWaypointSuggestionUseCase {
     private let placeRepository: PlaceRepository
     private let distanceMatrixClient: DistanceMatrixClient
     private let cacheRepository: CacheRepository
+    private let aiRepository: AIRecommendationRepository
     private let config: WaypointSuggestionConfig
     
     init(
         placeRepository: PlaceRepository,
         distanceMatrixClient: DistanceMatrixClient,
         cacheRepository: CacheRepository,
+        aiRepository: AIRecommendationRepository,
         config: WaypointSuggestionConfig = WaypointSuggestionConfig()
     ) {
         self.placeRepository = placeRepository
         self.distanceMatrixClient = distanceMatrixClient
         self.cacheRepository = cacheRepository
+        self.aiRepository = aiRepository
         self.config = config
     }
     
@@ -80,7 +83,7 @@ final class SystemWaypointSuggestionUseCase {
                     print("  • \(sc.place.name) [\(sc.place.genre.googleMapType)] ~ \(mins) min")
                 }
                 #endif
-                let genres = mapToGenres(picked)
+                let genres = await mapToGenres(picked, mood: mood, transportMode: transportMode)
                 // Save mapping and exclude IDs (deterministic set)
                 await cacheRepository.savePlacesForGenres(places: picked.map { $0.place }, genres: genres)
                 for sp in picked { await cacheRepository.addExcludedPlaceId(sp.place.placeId) }
@@ -217,17 +220,41 @@ final class SystemWaypointSuggestionUseCase {
         return Array(picked.prefix(3))
     }
     
-    private func mapToGenres(_ picked: [ScoredCandidate]) -> [Genre] {
-        return picked.map { sc in
+    private func mapToGenres(_ picked: [ScoredCandidate], mood: Mood, transportMode: TransportMode) async -> [Genre] {
+        var genres: [Genre] = []
+        
+        for sc in picked {
             let base = nameFromType(sc.place.genre.googleMapType, category: sc.category)
             let minutes = Int(round(sc.timeToSpotMinutes))
             let display = "\(base) (\(minutes)分)"
-            return Genre(
+            
+            // Generate hint using AI
+            var hintText: String? = nil
+            do {
+                let hintInput = PlaceHintInput(
+                    spotName: sc.place.name,
+                    category: sc.category,
+                    isIndoor: isIndoor(place: sc.place),
+                    vibe: mood.vibeType,
+                    transportMode: transportMode
+                )
+                hintText = try await aiRepository.generateHint(for: hintInput)
+            } catch {
+                #if DEBUG
+                print("⚠️ Hint generation failed for \(sc.place.name): \(error)")
+                #endif
+            }
+            
+            let genre = Genre(
                 name: display,
                 category: sc.category,
-                googleMapType: sc.place.genre.googleMapType
+                googleMapType: sc.place.genre.googleMapType,
+                hint: hintText
             )
+            genres.append(genre)
         }
+        
+        return genres
     }
     
     private func nameFromType(_ type: String, category: GenreCategory) -> String {
@@ -250,6 +277,11 @@ final class SystemWaypointSuggestionUseCase {
         default:
             return category == .restaurant ? "グルメ" : "スポット"
         }
+    }
+    
+    private func isIndoor(place: Place) -> Bool {
+        let indoorTypes = ["museum", "library", "book_store", "shopping_mall", "movie_theater", "restaurant", "cafe", "bar", "bakery"]
+        return indoorTypes.contains(place.genre.googleMapType)
     }
     
     private func seedInput(now: Date, seed: String?) -> String {

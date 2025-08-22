@@ -196,7 +196,7 @@ struct HomeView: View {
                 Text("寄り道を3つ提案する")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(PrimaryButtonStyle())
+            .buttonStyle(BlueButtonStyle())
             .disabled(!canStartJourney)
         }
         .appCard()
@@ -220,21 +220,41 @@ struct HomeView: View {
     private func startJourney() {
         guard canStartJourney else { return }
         
-        // 目的地を設定
-        let destination = Destination(
-            name: destinationText,
-            coordinate: CLLocationCoordinate2D(latitude: 0, longitude: 0), // 後でジオコーディング
-            address: destinationText
-        )
-        viewModel.setDestination(destination)
-        viewModel.setTransportMode(selectedTransport)
-        viewModel.setMood(Mood(activityType: selectedInOut, vibeType: selectedVibe))
-        
-        // 次の画面へ
-        if useAI {
-            viewModel.navigateToGenreSelectionAI()
-        } else {
-            viewModel.navigateToGenreSelection()
+        // 目的地の座標を取得するためにジオコーディングを実行
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(destinationText) { [weak self] placemarks, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                #if DEBUG
+                print("❌ Geocoding error: \(error)")
+                #endif
+                self.viewModel.showErrorMessage("目的地の座標を取得できませんでした。住所を確認してください。")
+                return
+            }
+            
+            guard let placemark = placemarks?.first,
+                  let location = placemark.location else {
+                self.viewModel.showErrorMessage("目的地の座標を取得できませんでした。")
+                return
+            }
+            
+            // 目的地を設定
+            let destination = Destination(
+                name: destinationText,
+                coordinate: location.coordinate,
+                address: placemark.formattedAddress ?? destinationText
+            )
+            viewModel.setDestination(destination)
+            viewModel.setTransportMode(selectedTransport)
+            viewModel.setMood(Mood(activityType: selectedInOut, vibeType: selectedVibe))
+            
+            // 次の画面へ
+            if useAI {
+                viewModel.navigateToGenreSelectionAI()
+            } else {
+                viewModel.navigateToGenreSelection()
+            }
         }
     }
     
@@ -368,5 +388,33 @@ struct ExtendedHomeView: View {
                 Spacer(minLength: 50)
             }
         }
+    }
+}
+
+// MARK: - CLPlacemark Extension
+
+extension CLPlacemark {
+    var formattedAddress: String? {
+        guard let name = name else { return nil }
+        
+        var components: [String] = [name]
+        
+        if let thoroughfare = thoroughfare {
+            components.append(thoroughfare)
+        }
+        
+        if let locality = locality {
+            components.append(locality)
+        }
+        
+        if let administrativeArea = administrativeArea {
+            components.append(administrativeArea)
+        }
+        
+        if let country = country {
+            components.append(country)
+        }
+        
+        return components.joined(separator: ", ")
     }
 }

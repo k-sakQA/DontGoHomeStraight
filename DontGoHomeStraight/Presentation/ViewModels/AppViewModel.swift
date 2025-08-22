@@ -155,6 +155,12 @@ class AppViewModel: ObservableObject {
         currentScreen = .home
     }
     
+    func navigateToLanding() {
+        // 状態をリセット
+        resetJourneyData()
+        currentScreen = .landing
+    }
+    
     // MARK: - Journey Data Management
     
     func setDestination(_ destination: Destination) {
@@ -361,6 +367,12 @@ class AppViewModel: ObservableObject {
         showError = false
         errorMessage = nil
     }
+    
+    // MARK: - Photo URL Generation
+    
+    func getPhotoURL(photoReference: String, maxWidth: Int = 400) -> URL? {
+        return try? placeRecommendationUseCase.getPhotoURL(photoReference: photoReference, maxWidth: maxWidth)
+    }
 }
 
 // MARK: - App Screen Enum
@@ -485,6 +497,11 @@ class MockPlaceRepository: PlaceRepository {
                 placeId: "mock_\(name.hashValue)"
             )
         }
+    }
+    
+    func getPhotoURL(photoReference: String, maxWidth: Int) -> URL? {
+        // Mock implementation returns a placeholder image URL
+        return URL(string: "https://via.placeholder.com/\(maxWidth)x240")
     }
 }
 

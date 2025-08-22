@@ -58,15 +58,36 @@ struct ArrivalView: View {
             RoundedRectangle(cornerRadius: 22)
                 .fill(place.genre.category == .restaurant ? Color(hex: "FFC107").opacity(0.3) : Color(hex: "C5D9FF"))
                 .frame(height: 240)
-                .overlay(
+            
+            // 写真またはプレースホルダー
+            if let photoReference = place.photoReference,
+               let photoURL = viewModel.getPhotoURL(photoReference: photoReference, maxWidth: 400) {
+                AsyncImage(url: photoURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(height: 240)
+                        .clipped()
+                        .cornerRadius(22)
+                } placeholder: {
+                    // ローディング中のプレースホルダー
                     VStack {
-                        Spacer()
-                        Text(place.genre.category.emoji)
-                            .font(.system(size: 80))
-                        Spacer()
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        Text("写真を読み込み中...")
+                            .font(.caption)
+                            .foregroundColor(.white)
                     }
-                )
-                .clipped()
+                }
+            } else {
+                // 写真がない場合のプレースホルダー
+                VStack {
+                    Spacer()
+                    Text(place.genre.category.emoji)
+                        .font(.system(size: 80))
+                    Spacer()
+                }
+            }
         }
     }
     
@@ -123,7 +144,7 @@ struct ArrivalView: View {
             .buttonStyle(PrimaryButtonStyle())
             
             Button(action: {
-                viewModel.navigateToHome()
+                viewModel.navigateToLanding()
             }) {
                 Text("もう一度提案を受ける")
                     .frame(maxWidth: .infinity)

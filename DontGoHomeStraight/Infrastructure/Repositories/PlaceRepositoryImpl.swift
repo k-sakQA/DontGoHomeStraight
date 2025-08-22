@@ -198,4 +198,8 @@ extension PlaceRepositoryImpl {
     func isCacheValid(timestamp: Date, maxAge: TimeInterval = 3600) -> Bool { // 1時間
         return Date().timeIntervalSince(timestamp) < maxAge
     }
+    
+    func getPhotoURL(photoReference: String, maxWidth: Int = 400) -> URL? {
+        return googlePlacesClient.getPhotoURL(photoReference: photoReference, maxWidth: maxWidth)
+    }
 }

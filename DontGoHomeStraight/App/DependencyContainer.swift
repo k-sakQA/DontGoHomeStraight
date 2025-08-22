@@ -60,7 +60,8 @@ class DependencyContainer {
         return SystemWaypointSuggestionUseCase(
             placeRepository: placeRepository,
             distanceMatrixClient: dm,
-            cacheRepository: cacheRepository
+            cacheRepository: cacheRepository,
+            aiRepository: aiRepository
         )
     }()
     

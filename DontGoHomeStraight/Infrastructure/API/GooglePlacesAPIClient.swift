@@ -212,6 +212,11 @@ class GooglePlacesAPIClient {
         
         return distance <= 5000 // 5km
     }
+    
+    func getPhotoURL(photoReference: String, maxWidth: Int = 400) -> URL? {
+        let urlString = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=\(maxWidth)&photo_reference=\(photoReference)&key=\(apiKey)"
+        return URL(string: urlString)
+    }
 }
 
 // MARK: - Response Models

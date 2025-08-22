@@ -10,6 +10,8 @@ protocol PlaceRecommendationUseCase {
     ) async throws -> [Genre]
     
     func clearCache() async throws
+    
+    func getPhotoURL(photoReference: String, maxWidth: Int) -> URL?
 }
 
 class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
@@ -396,6 +398,10 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
     
     func clearCache() async throws {
         await cacheRepository.clearCache()
+    }
+    
+    func getPhotoURL(photoReference: String, maxWidth: Int) -> URL? {
+        return placeRepository.getPhotoURL(photoReference: photoReference, maxWidth: maxWidth)
     }
 }
 

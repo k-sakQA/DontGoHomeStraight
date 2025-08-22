@@ -9,6 +9,7 @@ protocol PlaceRepository {
     func validatePlace(name: String, location: CLLocationCoordinate2D) async throws -> Bool
     // Batch Text Search by names
     func searchPlaces(names: [String], near location: CLLocationCoordinate2D) async throws -> [Place]
+    func getPhotoURL(photoReference: String, maxWidth: Int) -> URL?
 }
 
 enum PlaceRepositoryError: LocalizedError {
