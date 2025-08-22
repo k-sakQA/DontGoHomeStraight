@@ -282,16 +282,34 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
         }
         
         // 9) ジャンルを返す（寄り道タイムを名称に付与: "ジャンル名 (XX分)")
-        let genres = finalThree.map { sp -> Genre in
+        var genres: [Genre] = []
+        for sp in finalThree {
             let category = determineCategoryFromPlaceType(sp.place.genre.googleMapType)
             let baseName = mapPlaceTypeToGenreName(sp.place.genre.googleMapType, category: category)
             let mins = Int(round(sp.durationSec / 60.0))
             let displayName = "\(baseName) (\(mins)分)"
-            return Genre(
+            var hintText: String? = nil
+            do {
+                let hintInput = PlaceHintInput(
+                    spotName: sp.place.name,
+                    category: category,
+                    isIndoor: isIndoor(place: sp.place),
+                    vibe: mood.vibeType,
+                    transportMode: transportMode
+                )
+                hintText = try await aiRepository.generateHint(for: hintInput)
+            } catch {
+                #if DEBUG
+                print("⚠️ Hint generation failed for \(sp.place.name): \(error)")
+                #endif
+            }
+            let g = Genre(
                 name: displayName,
                 category: category,
-                googleMapType: sp.place.genre.googleMapType
+                googleMapType: sp.place.genre.googleMapType,
+                hint: hintText
             )
+            genres.append(g)
         }
         #if DEBUG
         print("🎯 Picked spots (\(finalThree.count)):")

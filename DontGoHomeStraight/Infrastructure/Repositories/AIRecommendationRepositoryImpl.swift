@@ -46,6 +46,10 @@ class AIRecommendationRepositoryImpl: AIRecommendationRepository {
         
         return hasValidCharacters
     }
+    
+    func generateHint(for place: PlaceHintInput) async throws -> String {
+        return try await openAIClient.generateHint(for: place)
+    }
 }
 
 

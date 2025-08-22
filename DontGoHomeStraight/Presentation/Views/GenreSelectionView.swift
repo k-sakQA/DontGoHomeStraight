@@ -215,6 +215,13 @@ struct GenreCard: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
+                    if let hint = genre.hint, hint.isEmpty == false {
+                        Text("ヒント：\(hint)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                    }
+                    
                     Text(genre.description)
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -364,6 +371,13 @@ struct EnhancedGenreCard: View {
                     Text(genre.category.displayName)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
+                    
+                    if let hint = genre.hint, hint.isEmpty == false {
+                        Text("ヒント：\(hint)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                    }
                     
                     Text(genre.description)
                         .font(.caption)

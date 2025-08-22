@@ -85,6 +85,56 @@ class OpenAIAPIClient {
         }
     }
     
+    func generateHint(for place: PlaceHintInput) async throws -> String {
+        #if DEBUG
+        print("🤖 OpenAI Hint API Call Start: spot=\(place.spotName)")
+        #endif
+        let sys = """
+        あなたは観光スポットの謎解き案内人です。対象スポット名を直接出さず、日本語で30文字程度の短いヒントを1文で返してください。語尾は体言止めや常体で簡潔に。記号は控えめに。
+        """
+        let user = """
+        スポット: \(place.spotName)
+        カテゴリ: \(place.category.displayName)
+        屋内/屋外: \(place.isIndoor ? "屋内" : "屋外")
+        気分: \(place.vibe.displayName)
+        移動手段: \(place.transportMode.displayName)
+        """
+        let req = OpenAIRequest(
+            model: "gpt-4o-mini",
+            messages: [
+                ChatMessage(role: "system", content: sys),
+                ChatMessage(role: "user", content: user)
+            ],
+            maxTokens: 64,
+            temperature: 0.5
+        )
+        var urlRequest = URLRequest(url: baseURL)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body = try JSONEncoder().encode(req)
+        urlRequest.httpBody = body
+        let (data, response) = try await session.data(for: urlRequest)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AIRecommendationError.networkError
+        }
+        switch httpResponse.statusCode {
+        case 200...299:
+            let openAIResponse = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+            guard let content = openAIResponse.choices.first?.message.content else {
+                throw AIRecommendationError.invalidResponse
+            }
+            let hint = content.trimmingCharacters(in: .whitespacesAndNewlines)
+            return String(hint.prefix(40))
+        case 401:
+            throw AIRecommendationError.apiKeyInvalid
+        case 429:
+            throw AIRecommendationError.quotaExceeded
+        default:
+            throw AIRecommendationError.aiServiceUnavailable
+        }
+    }
+    
     private func parseRecommendations(from response: OpenAIResponse) throws -> [LLMCandidate] {
         guard let choice = response.choices.first,
               let content = choice.message.content else {
