@@ -54,19 +54,49 @@ struct ArrivalView: View {
     @ViewBuilder
     private func heroImageSection(_ place: Place) -> some View {
         ZStack {
-            // プレースホルダー背景
-            RoundedRectangle(cornerRadius: 22)
-                .fill(place.genre.category == .restaurant ? Color(hex: "FFC107").opacity(0.3) : Color(hex: "C5D9FF"))
-                .frame(height: 240)
-                .overlay(
-                    VStack {
-                        Spacer()
-                        Text(place.genre.category.emoji)
-                            .font(.system(size: 80))
-                        Spacer()
+            if let photoRef = place.photoReference, photoRef.isEmpty == false {
+                // Google Places Photo API から代表写真を表示
+                let urlString = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=\(photoRef)&key=\(Environment.googlePlacesAPIKey)"
+                if let url = URL(string: urlString) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .empty:
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 240)
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(height: 240)
+                                .clipped()
+                        case .failure:
+                            RoundedRectangle(cornerRadius: 22)
+                                .fill(Color.appSurfaceAlt)
+                                .frame(height: 240)
+                        @unknown default:
+                            RoundedRectangle(cornerRadius: 22)
+                                .fill(Color.appSurfaceAlt)
+                                .frame(height: 240)
+                        }
                     }
-                )
-                .clipped()
+                    .cornerRadius(22)
+                }
+            } else {
+                // プレースホルダー背景
+                RoundedRectangle(cornerRadius: 22)
+                    .fill(place.genre.category == .restaurant ? Color(hex: "FFC107").opacity(0.3) : Color(hex: "C5D9FF"))
+                    .frame(height: 240)
+                    .overlay(
+                        VStack {
+                            Spacer()
+                            Text(place.genre.category.emoji)
+                                .font(.system(size: 80))
+                            Spacer()
+                        }
+                    )
+                    .clipped()
+            }
         }
     }
     

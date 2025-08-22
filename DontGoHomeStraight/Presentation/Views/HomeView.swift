@@ -196,7 +196,7 @@ struct HomeView: View {
                 Text("寄り道を3つ提案する")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(PrimaryButtonStyle())
+            .buttonStyle(BluePrimaryButtonStyle())
             .disabled(!canStartJourney)
         }
         .appCard()
@@ -220,21 +220,34 @@ struct HomeView: View {
     private func startJourney() {
         guard canStartJourney else { return }
         
-        // 目的地を設定
-        let destination = Destination(
-            name: destinationText,
-            coordinate: CLLocationCoordinate2D(latitude: 0, longitude: 0), // 後でジオコーディング
-            address: destinationText
-        )
-        viewModel.setDestination(destination)
-        viewModel.setTransportMode(selectedTransport)
-        viewModel.setMood(Mood(activityType: selectedInOut, vibeType: selectedVibe))
-        
-        // 次の画面へ
-        if useAI {
-            viewModel.navigateToGenreSelectionAI()
-        } else {
-            viewModel.navigateToGenreSelection()
+        // 入力文字列をジオコーディングして正確な緯度経度を取得
+        let query = destinationText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard query.isEmpty == false else { return }
+        let geocoder = CLGeocoder()
+        viewModel.isLoading = true
+        geocoder.geocodeAddressString(query) { placemarks, error in
+            DispatchQueue.main.async {
+                self.viewModel.isLoading = false
+                if let loc = placemarks?.first?.location {
+                    let coordinate = loc.coordinate
+                    let address = placemarks?.first?.name ?? query
+                    let dest = Destination(
+                        name: query,
+                        coordinate: coordinate,
+                        address: address
+                    )
+                    self.viewModel.setDestination(dest)
+                    self.viewModel.setTransportMode(self.selectedTransport)
+                    self.viewModel.setMood(Mood(activityType: self.selectedInOut, vibeType: self.selectedVibe))
+                    if self.useAI {
+                        self.viewModel.navigateToGenreSelectionAI()
+                    } else {
+                        self.viewModel.navigateToGenreSelection()
+                    }
+                } else {
+                    self.viewModel.showErrorMessage("目的地を特定できませんでした")
+                }
+            }
         }
     }
     

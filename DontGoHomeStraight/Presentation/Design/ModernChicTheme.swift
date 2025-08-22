@@ -136,3 +136,32 @@ struct TabStyle: ButtonStyle {
     }
 }
 
+// MARK: - Blue Gradient for Primary CTA on HOME
+extension LinearGradient {
+    static var appBlueGradient: LinearGradient {
+        LinearGradient(
+            colors: [Color(hex: "3A7DFF"), Color(hex: "6AA9FF")],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+}
+
+struct BluePrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(16)
+            .background(
+                LinearGradient.appBlueGradient
+                    .opacity(configuration.isPressed ? 0.9 : 1.0)
+            )
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(configuration.isPressed ? 0.1 : 0.2), radius: configuration.isPressed ? 6 : 12, x: 0, y: configuration.isPressed ? 3 : 8)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.8), value: configuration.isPressed)
+    }
+}
+
