@@ -220,38 +220,23 @@ struct HomeView: View {
     private func startJourney() {
         guard canStartJourney else { return }
         
-        // 目的地の座標を取得するためにジオコーディングを実行
-        let geocoder = CLGeocoder()
-        geocoder.geocodeAddressString(destinationText) { placemarks, error in
-            if let error = error {
-                #if DEBUG
-                print("❌ Geocoding error: \(error)")
-                #endif
-                viewModel.showErrorMessage("目的地の座標を取得できませんでした。住所を確認してください。")
-                return
-            }
-            
-            guard let placemark = placemarks?.first,
-                  let location = placemark.location else {
-                viewModel.showErrorMessage("目的地の座標を取得できませんでした。")
-                return
-            }
-            
-            // 目的地を設定
-            let destination = Destination(
-                name: destinationText,
-                coordinate: location.coordinate,
-                address: placemark.formattedAddress ?? destinationText
-            )
-            viewModel.setDestination(destination)
-            viewModel.setTransportMode(selectedTransport)
-            viewModel.setMood(Mood(activityType: selectedInOut, vibeType: selectedVibe))
-            
-            // 次の画面へ
-            if useAI {
-                viewModel.navigateToGenreSelectionAI()
+        Task {
+            if let place = await viewModel.resolveDestination(from: destinationText) {
+                let destination = Destination(
+                    name: place.name,
+                    coordinate: place.coordinate,
+                    address: place.address
+                )
+                viewModel.setDestination(destination)
+                viewModel.setTransportMode(selectedTransport)
+                viewModel.setMood(Mood(activityType: selectedInOut, vibeType: selectedVibe))
+                if useAI {
+                    viewModel.navigateToGenreSelectionAI()
+                } else {
+                    viewModel.navigateToGenreSelection()
+                }
             } else {
-                viewModel.navigateToGenreSelection()
+                viewModel.showErrorMessage("目的地の座標を取得できませんでした。住所を確認してください。")
             }
         }
     }

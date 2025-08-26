@@ -12,6 +12,9 @@ protocol PlaceRecommendationUseCase {
     func clearCache() async throws
     
     func getPhotoURL(photoReference: String, maxWidth: Int) -> URL?
+
+    /// Resolve a free-text place name to a concrete Place near a location
+    func resolvePlace(name: String, near location: CLLocationCoordinate2D) async throws -> Place?
 }
 
 class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
@@ -403,6 +406,10 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
     
     func getPhotoURL(photoReference: String, maxWidth: Int) -> URL? {
         return placeRepository.getPhotoURL(photoReference: photoReference, maxWidth: maxWidth)
+    }
+
+    func resolvePlace(name: String, near location: CLLocationCoordinate2D) async throws -> Place? {
+        return try await placeRepository.searchPlace(name: name, near: location)
     }
 }
 

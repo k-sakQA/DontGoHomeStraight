@@ -229,31 +229,15 @@ struct DestinationSettingView: View {
     
     private func searchLocation() {
         guard !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        
         isSearching = true
-        
-        let geocoder = CLGeocoder()
-        geocoder.geocodeAddressString(searchText) { placemarks, error in
-            DispatchQueue.main.async {
-                isSearching = false
-                
-                if let error = error {
-                    print("Geocoding error: \(error)")
-                    return
-                }
-                
-                guard let placemark = placemarks?.first,
-                      let location = placemark.location else {
-                    return
-                }
-                
-                let coordinate = location.coordinate
-                setDestination(coordinate: coordinate)
-                
-                // 地図をその場所に移動
+        Task { @MainActor in
+            defer { isSearching = false }
+            if let place = await viewModel.resolveDestination(from: searchText) {
+                setDestination(coordinate: place.coordinate)
+                selectedAddress = place.address
                 withAnimation(.easeInOut(duration: 0.8)) {
                     region = MKCoordinateRegion(
-                        center: coordinate,
+                        center: place.coordinate,
                         span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
                     )
                 }
@@ -264,41 +248,9 @@ struct DestinationSettingView: View {
     private func setDestination(coordinate: CLLocationCoordinate2D) {
         selectedCoordinate = coordinate
         
-        // 逆ジオコーディングで住所を取得
-        let geocoder = CLGeocoder()
-        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        
-        geocoder.reverseGeocodeLocation(location) { placemarks, error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    print("Reverse geocoding error: \(error)")
-                    selectedAddress = "住所を取得できませんでした"
-                    return
-                }
-                
-                if let placemark = placemarks?.first {
-                    var addressComponents: [String] = []
-                    
-                    if let administrativeArea = placemark.administrativeArea {
-                        addressComponents.append(administrativeArea)
-                    }
-                    if let locality = placemark.locality {
-                        addressComponents.append(locality)
-                    }
-                    if let subLocality = placemark.subLocality {
-                        addressComponents.append(subLocality)
-                    }
-                    if let thoroughfare = placemark.thoroughfare {
-                        addressComponents.append(thoroughfare)
-                    }
-                    
-                    selectedAddress = addressComponents.joined(separator: " ")
-                    
-                    if selectedAddress.isEmpty {
-                        selectedAddress = String(format: "%.4f, %.4f", coordinate.latitude, coordinate.longitude)
-                    }
-                }
-            }
+        // 住所表記は Places 詳細情報がない場合に座標表示にフォールバック
+        if selectedAddress.isEmpty {
+            selectedAddress = String(format: "%.4f, %.4f", coordinate.latitude, coordinate.longitude)
         }
     }
     

@@ -373,6 +373,19 @@ class AppViewModel: ObservableObject {
     func getPhotoURL(photoReference: String, maxWidth: Int = 400) -> URL? {
         return try? placeRecommendationUseCase.getPhotoURL(photoReference: photoReference, maxWidth: maxWidth)
     }
+
+    // MARK: - Place Resolution
+    func resolveDestination(from text: String) async -> Place? {
+        guard let currentLocation = currentLocation else { return nil }
+        do {
+            return try await placeRecommendationUseCase.resolvePlace(name: text, near: currentLocation)
+        } catch {
+            #if DEBUG
+            print("❌ resolveDestination error: \(error)")
+            #endif
+            return nil
+        }
+    }
 }
 
 // MARK: - App Screen Enum
