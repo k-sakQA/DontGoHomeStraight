@@ -371,7 +371,7 @@ class AppViewModel: ObservableObject {
     // MARK: - Photo URL Generation
     
     func getPhotoURL(photoReference: String, maxWidth: Int = 400) -> URL? {
-        return try? placeRecommendationUseCase.getPhotoURL(photoReference: photoReference, maxWidth: maxWidth)
+        return placeRecommendationUseCase.getPhotoURL(photoReference: photoReference, maxWidth: maxWidth)
     }
 
     // MARK: - Place Resolution
