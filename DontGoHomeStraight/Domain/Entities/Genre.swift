@@ -6,13 +6,15 @@ struct Genre {
 	let category: GenreCategory
 	let googleMapType: String
 	let hint: String?
+	let durationMinutes: Int? // 実際の計算された時間（分）
 	
-	init(id: String = UUID().uuidString, name: String, category: GenreCategory, googleMapType: String, hint: String? = nil) {
+	init(id: String = UUID().uuidString, name: String, category: GenreCategory, googleMapType: String, hint: String? = nil, durationMinutes: Int? = nil) {
 		self.id = id
 		self.name = name
 		self.category = category
 		self.googleMapType = googleMapType
 		self.hint = hint
+		self.durationMinutes = durationMinutes
 	}
 }
 

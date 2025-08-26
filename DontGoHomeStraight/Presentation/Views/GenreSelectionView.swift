@@ -130,7 +130,11 @@ struct GenreSelectionView: View {
     }
     
     private func estimatedDuration(for genre: Genre) -> String {
-        // 簡易的にジャンルごとの時間を返す
+        // 実際の計算された時間を使用、ない場合はフォールバック値
+        if let minutes = genre.durationMinutes {
+            return "~\(minutes)分"
+        }
+        // フォールバック：ジャンルごとのデフォルト値
         switch genre.category {
         case .restaurant:
             return "~18分"

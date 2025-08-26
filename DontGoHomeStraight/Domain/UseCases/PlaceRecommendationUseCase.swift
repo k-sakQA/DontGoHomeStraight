@@ -309,7 +309,8 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
                 name: displayName,
                 category: category,
                 googleMapType: sp.place.genre.googleMapType,
-                hint: hintText
+                hint: hintText,
+                durationMinutes: Int(round(sp.durationSec / 60.0))
             )
             genres.append(g)
         }

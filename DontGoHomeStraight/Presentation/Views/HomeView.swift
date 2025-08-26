@@ -204,7 +204,7 @@ struct HomeView: View {
     
     private var locationDisplayText: String {
         if viewModel.isLocationAvailable {
-            if let location = viewModel.currentLocation {
+            if viewModel.currentLocation != nil {
                 return "現在地（取得済み）"
             }
             return "位置情報を取得中..."
@@ -222,20 +222,18 @@ struct HomeView: View {
         
         // 目的地の座標を取得するためにジオコーディングを実行
         let geocoder = CLGeocoder()
-        geocoder.geocodeAddressString(destinationText) { [weak self] placemarks, error in
-            guard let self = self else { return }
-            
+        geocoder.geocodeAddressString(destinationText) { placemarks, error in
             if let error = error {
                 #if DEBUG
                 print("❌ Geocoding error: \(error)")
                 #endif
-                self.viewModel.showErrorMessage("目的地の座標を取得できませんでした。住所を確認してください。")
+                viewModel.showErrorMessage("目的地の座標を取得できませんでした。住所を確認してください。")
                 return
             }
             
             guard let placemark = placemarks?.first,
                   let location = placemark.location else {
-                self.viewModel.showErrorMessage("目的地の座標を取得できませんでした。")
+                viewModel.showErrorMessage("目的地の座標を取得できませんでした。")
                 return
             }
             

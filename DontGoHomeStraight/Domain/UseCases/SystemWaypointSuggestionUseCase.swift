@@ -249,7 +249,8 @@ final class SystemWaypointSuggestionUseCase {
                 name: display,
                 category: sc.category,
                 googleMapType: sc.place.genre.googleMapType,
-                hint: hintText
+                hint: hintText,
+                durationMinutes: minutes
             )
             genres.append(genre)
         }

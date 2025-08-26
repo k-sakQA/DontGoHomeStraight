@@ -358,7 +358,7 @@ class AppViewModel: ObservableObject {
         showErrorMessage(message)
     }
     
-    private func showErrorMessage(_ message: String) {
+    func showErrorMessage(_ message: String) {
         errorMessage = message
         showError = true
     }
