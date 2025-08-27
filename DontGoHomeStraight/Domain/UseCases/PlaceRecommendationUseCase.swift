@@ -15,6 +15,9 @@ protocol PlaceRecommendationUseCase {
 
     /// Resolve a free-text place name to a concrete Place near a location
     func resolvePlace(name: String, near location: CLLocationCoordinate2D) async throws -> Place?
+    
+    /// Search multiple place candidates for a query
+    func searchPlaceCandidates(query: String, near location: CLLocationCoordinate2D, limit: Int) async throws -> [Place]
 }
 
 class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
@@ -410,6 +413,10 @@ class PlaceRecommendationUseCaseImpl: PlaceRecommendationUseCase {
 
     func resolvePlace(name: String, near location: CLLocationCoordinate2D) async throws -> Place? {
         return try await placeRepository.searchPlace(name: name, near: location)
+    }
+    
+    func searchPlaceCandidates(query: String, near location: CLLocationCoordinate2D, limit: Int) async throws -> [Place] {
+        return try await placeRepository.searchPlaceCandidates(query: query, near: location, limit: limit)
     }
 }
 

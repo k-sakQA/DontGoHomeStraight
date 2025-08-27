@@ -202,4 +202,15 @@ extension PlaceRepositoryImpl {
     func getPhotoURL(photoReference: String, maxWidth: Int = 400) -> URL? {
         return googlePlacesClient.getPhotoURL(photoReference: photoReference, maxWidth: maxWidth)
     }
+    
+    func searchPlaceCandidates(query: String, near location: CLLocationCoordinate2D, limit: Int) async throws -> [Place] {
+        do {
+            let places = try await googlePlacesClient.searchPlaceCandidates(query: query, near: location, limit: limit)
+            return places
+        } catch let error as PlaceRepositoryError {
+            throw error
+        } catch {
+            throw PlaceRepositoryError.searchFailed
+        }
+    }
 }

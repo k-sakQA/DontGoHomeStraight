@@ -10,6 +10,9 @@ protocol PlaceRepository {
     // Batch Text Search by names
     func searchPlaces(names: [String], near location: CLLocationCoordinate2D) async throws -> [Place]
     func getPhotoURL(photoReference: String, maxWidth: Int) -> URL?
+    
+    // 複数の候補を返すテキスト検索
+    func searchPlaceCandidates(query: String, near location: CLLocationCoordinate2D, limit: Int) async throws -> [Place]
 }
 
 enum PlaceRepositoryError: LocalizedError {

@@ -217,6 +217,56 @@ class GooglePlacesAPIClient {
         let urlString = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=\(maxWidth)&photo_reference=\(photoReference)&key=\(apiKey)"
         return URL(string: urlString)
     }
+    
+    func searchPlaceCandidates(query: String, near location: CLLocationCoordinate2D, limit: Int) async throws -> [Place] {
+        let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let urlString = "\(baseURL)/textsearch/json?query=\(encodedQuery)&location=\(location.latitude),\(location.longitude)&radius=5000&key=\(apiKey)"
+        
+        #if DEBUG
+        print("🔍 Google Places API - Search Candidates:")
+        print("  Query: \(query)")
+        print("  Limit: \(limit)")
+        #endif
+        
+        guard let url = URL(string: urlString) else {
+            throw PlaceRepositoryError.searchFailed
+        }
+        
+        do {
+            let (data, response) = try await session.data(from: url)
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                throw PlaceRepositoryError.networkError
+            }
+            
+            let searchResponse = try JSONDecoder().decode(GooglePlacesSearchResponse.self, from: data)
+            
+            #if DEBUG
+            print("📋 Found \(searchResponse.results.count) total results")
+            #endif
+            
+            // 指定された数だけ結果を返す
+            let places = searchResponse.results.prefix(limit).compactMap { result in
+                result.toPlace()
+            }
+            
+            #if DEBUG
+            print("✅ Returning \(places.count) candidates")
+            for (index, place) in places.enumerated() {
+                print("  \(index + 1). \(place.name) - \(place.address)")
+            }
+            #endif
+            
+            return Array(places)
+            
+        } catch {
+            #if DEBUG
+            print("❌ Search candidates error: \(error)")
+            #endif
+            throw PlaceRepositoryError.searchFailed
+        }
+    }
 }
 
 // MARK: - Response Models

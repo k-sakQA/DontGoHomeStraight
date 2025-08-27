@@ -239,11 +239,13 @@ class AppViewModel: ObservableObject {
         }
         
         #if DEBUG
-        print("🔍 Recommendations Request:")
+        print("🔍 getRecommendations started:")
         print("  📍 Current: \(currentLocation)")
         print("  🎯 Destination: \(destination.coordinate)")
         print("  😊 Mood: \(mood.description)")
         print("  🚶 Transport: \(transportMode.displayName)")
+        print("  🤖 forceAI: \(forceAI)")
+        print("  ⚙️ FeatureFlags.detourSystemPicker: \(FeatureFlags.detourSystemPicker)")
         #endif
         
         isLoading = true
@@ -260,9 +262,16 @@ class AppViewModel: ObservableObject {
                     mood: mood,
                     transportMode: transportMode
                 )
+                #if DEBUG
+                print("✅ SystemWaypointSuggestionUseCase completed, got \(genres.count) genres")
+                #endif
             } else {
                 #if DEBUG
-                if forceAI { print("🧠 Forcing AI recommendation flow") }
+                if forceAI { 
+                    print("🧠 Forcing AI recommendation flow") 
+                } else {
+                    print("🧠 Using AI recommendation flow (default)")
+                }
                 #endif
                 genres = try await placeRecommendationUseCase.getRecommendations(
                     currentLocation: currentLocation,
@@ -270,6 +279,9 @@ class AppViewModel: ObservableObject {
                     mood: mood,
                     transportMode: transportMode
                 )
+                #if DEBUG
+                print("✅ PlaceRecommendationUseCase completed, got \(genres.count) genres")
+                #endif
             }
             
             #if DEBUG
@@ -292,11 +304,19 @@ class AppViewModel: ObservableObject {
             
         } catch {
             #if DEBUG
-            print("❌ Error in getRecommendations: \(error)")
+            print("❌ Error in getRecommendations:")
+            print("  Error: \(error)")
+            print("  Error type: \(type(of: error))")
+            if let localizedError = error as? LocalizedError {
+                print("  Localized description: \(localizedError.errorDescription ?? "nil")")
+            }
             #endif
             handleError(error)
         }
         
+        #if DEBUG
+        print("🔚 getRecommendations finished, setting isLoading = false")
+        #endif
         isLoading = false
     }
     
@@ -384,6 +404,26 @@ class AppViewModel: ObservableObject {
             print("❌ resolveDestination error: \(error)")
             #endif
             return nil
+        }
+    }
+    
+    // 複数の候補を検索
+    func searchDestinationCandidates(from text: String) async -> [Place] {
+        guard let currentLocation = currentLocation else { return [] }
+        
+        do {
+            // 最大5件の候補を取得
+            let places = try await placeRecommendationUseCase.searchPlaceCandidates(
+                query: text,
+                near: currentLocation,
+                limit: 5
+            )
+            return places
+        } catch {
+            #if DEBUG
+            print("❌ searchDestinationCandidates error: \(error)")
+            #endif
+            return []
         }
     }
 }
@@ -515,6 +555,19 @@ class MockPlaceRepository: PlaceRepository {
     func getPhotoURL(photoReference: String, maxWidth: Int) -> URL? {
         // Mock implementation returns a placeholder image URL
         return URL(string: "https://via.placeholder.com/\(maxWidth)x240")
+    }
+    
+    func searchPlaceCandidates(query: String, near location: CLLocationCoordinate2D, limit: Int) async throws -> [Place] {
+        // モック実装：複数の候補を返す
+        return (1...min(limit, 3)).map { index in
+            Place(
+                name: "\(query) 候補\(index)",
+                coordinate: location,
+                address: "東京都渋谷区 モック住所\(index)",
+                genre: Genre(name: "モック", category: .other, googleMapType: "point_of_interest"),
+                placeId: "mock-\(query)-\(index)"
+            )
+        }
     }
 }
 

@@ -9,6 +9,11 @@ struct HomeView: View {
     @State private var selectedVibe: VibeType = .discovery
     @State private var useAI = false
     
+    // 住所候補表示用
+    @State private var showingSuggestions = false
+    @State private var addressSuggestions: [Place] = []
+    @State private var isSearching = false
+    
     var body: some View {
         ZStack {
             LinearGradient.appBackgroundGradient
@@ -97,12 +102,53 @@ struct HomeView: View {
                         .font(.system(size: 13))
                         .foregroundColor(Color(hex: "6C757D"))
                     
-                    TextField(
-                        "例）長野駅 ／ 住所を入力",
-                        text: $destinationText
-                    )
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .disabled(!viewModel.isLocationAvailable)
+                    VStack(alignment: .leading, spacing: 0) {
+                        TextField(
+                            "例）長野駅 ／ 住所を入力",
+                            text: $destinationText
+                        )
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .disabled(!viewModel.isLocationAvailable)
+                        .onChange(of: destinationText) { newValue in
+                            searchAddressSuggestions(for: newValue)
+                        }
+                        
+                        // 候補リスト
+                        if showingSuggestions && !addressSuggestions.isEmpty {
+                            VStack(alignment: .leading, spacing: 0) {
+                                ForEach(addressSuggestions.prefix(5), id: \.placeId) { place in
+                                    Button(action: {
+                                        #if DEBUG
+                                        print("🔥 Button tapped for place: \(place.name)")
+                                        #endif
+                                        selectSuggestion(place)
+                                    }) {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(place.name)
+                                                .font(.system(size: 15, weight: .medium))
+                                                .foregroundColor(Color(hex: "212529"))
+                                            Text(place.address)
+                                                .font(.system(size: 12))
+                                                .foregroundColor(Color(hex: "6C757D"))
+                                                .lineLimit(1)
+                                        }
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                    
+                                    if place.placeId != addressSuggestions.prefix(5).last?.placeId {
+                                        Divider()
+                                    }
+                                }
+                            }
+                            .background(Color.white)
+                            .cornerRadius(8)
+                            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                            .zIndex(1000) // 他の要素より前面に表示
+                        }
+                    }
                 }
             }
         }
@@ -221,6 +267,20 @@ struct HomeView: View {
     private func startJourney() {
         guard canStartJourney else { return }
         
+        // すでに目的地が設定されている場合（候補から選択済み）はそのまま進む
+        if viewModel.destination != nil {
+            viewModel.setTransportMode(selectedTransport)
+            viewModel.setMood(Mood(activityType: selectedInOut, vibeType: selectedVibe))
+            
+            if useAI {
+                viewModel.navigateToGenreSelectionAI()
+            } else {
+                viewModel.navigateToGenreSelection()
+            }
+            return
+        }
+        
+        // 候補から選択されていない場合は、Google Places APIで解決
         Task {
             if let place = await viewModel.resolveDestination(from: destinationText) {
                 let destination = Destination(
@@ -242,6 +302,76 @@ struct HomeView: View {
         }
     }
     
+    private func searchAddressSuggestions(for query: String) {
+        #if DEBUG
+        print("🔍 searchAddressSuggestions called with: \(query)")
+        #endif
+        
+        // 空文字や短すぎる入力の場合は検索しない
+        guard query.count >= 2 else {
+            addressSuggestions = []
+            showingSuggestions = false
+            return
+        }
+        
+        guard let currentLocation = viewModel.currentLocation else {
+            #if DEBUG
+            print("⚠️ Current location not available")
+            #endif
+            return
+        }
+        
+        isSearching = true
+        
+        // Google Places APIを使って候補を検索
+        Task {
+            #if DEBUG
+            print("🔍 Starting place search for: \(query)")
+            #endif
+            
+            // 複数の候補を取得
+            let places = await viewModel.searchDestinationCandidates(from: query)
+            
+            await MainActor.run {
+                isSearching = false
+                addressSuggestions = places
+                showingSuggestions = !places.isEmpty
+                #if DEBUG
+                print("📍 Showing suggestions: \(showingSuggestions), count: \(places.count)")
+                for place in places {
+                    print("  - \(place.name): \(place.address)")
+                }
+                #endif
+            }
+        }
+    }
+    
+    private func selectSuggestion(_ place: Place) {
+        #if DEBUG
+        print("🎯 selectSuggestion called with: \(place.name)")
+        print("   Address: \(place.address)")
+        print("   Coordinate: \(place.coordinate)")
+        print("   PlaceId: \(place.placeId)")
+        #endif
+        
+        destinationText = place.name
+        showingSuggestions = false
+        
+        // 選択された場所を目的地として設定するだけ（ナビゲーションはしない）
+        let destination = Destination(
+            name: place.name,
+            coordinate: place.coordinate,
+            address: place.address
+        )
+        
+        #if DEBUG
+        print("✅ Selected suggestion: \(destination.name)")
+        print("📝 Setting destination in viewModel (no navigation yet)")
+        #endif
+        
+        viewModel.setDestination(destination)
+    }
+    
     private func formatCoordinate(_ coordinate: CLLocationCoordinate2D) -> String {
         return String(format: "%.4f, %.4f", coordinate.latitude, coordinate.longitude)
     }
@@ -253,11 +383,13 @@ struct ModernTextFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
             .padding(14)
-            .background(Color.white)
-            .cornerRadius(12)
-            .overlay(
+            .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(hex: "E9EDF3"), lineWidth: 1)
+                    .fill(Color.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color(hex: "E9EDF3"), lineWidth: 1)
+                    )
             )
             .font(.system(size: 16))
     }
