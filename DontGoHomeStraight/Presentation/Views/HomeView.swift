@@ -37,6 +37,7 @@ struct HomeView: View {
             }
         }
         .onAppear {
+            viewModel.requestLocationPermission()
             viewModel.startLocationUpdates()
         }
     }
@@ -86,7 +87,7 @@ struct HomeView: View {
                             text: .constant(locationDisplayText)
                         )
                         .disabled(true)
-                        .textFieldStyle(ModernTextFieldStyle())
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                     }
                 }
                 
@@ -100,7 +101,7 @@ struct HomeView: View {
                         "例）長野駅 ／ 住所を入力",
                         text: $destinationText
                     )
-                    .textFieldStyle(ModernTextFieldStyle())
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
                     .disabled(!viewModel.isLocationAvailable)
                 }
             }
