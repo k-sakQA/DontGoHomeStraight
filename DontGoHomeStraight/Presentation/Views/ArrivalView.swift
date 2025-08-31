@@ -5,6 +5,7 @@ struct ArrivalView: View {
     @ObservedObject var viewModel: AppViewModel
     @State private var showConfetti = false
     @State private var revealAnimation = false
+    @State private var showShareSheet = false
     
     var body: some View {
         ZStack {
@@ -27,6 +28,9 @@ struct ArrivalView: View {
         .navigationTitle("スポットに到着")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .sheet(isPresented: $showShareSheet) {
+            ShareSheet(activityItems: [shareText])
+        }
         .onAppear {
             startRevealAnimation()
         }
@@ -136,7 +140,7 @@ struct ArrivalView: View {
     private var actionButtons: some View {
         VStack(spacing: 10) {
             Button(action: {
-                // シェア機能（後で実装）
+                showShareSheet = true
             }) {
                 Text("思い出をシェア")
                     .frame(maxWidth: .infinity)
@@ -152,7 +156,15 @@ struct ArrivalView: View {
             .buttonStyle(SecondaryButtonStyle())
         }
     }
-    
+
+    private var shareText: String {
+        if let place = viewModel.arrivedPlace {
+            return "『\(place.name)』で素敵な時間を過ごしました！ #DontGoHomeStraight"
+        } else {
+            return "#DontGoHomeStraight"
+        }
+    }
+
     private func getPlaceDescription(_ place: Place) -> String {
         switch place.genre.category {
         case .restaurant:
