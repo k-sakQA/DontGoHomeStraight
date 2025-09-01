@@ -25,6 +25,7 @@
 - **Google Maps SDK** - 詳細な地図データ
 - **Google Places API** - 場所情報の取得
 - **Google Directions API** - 最適ルート計算
+- **AdMob (Native Ads)** - 収益化のための広告表示
 
 ### アーキテクチャ
 - **Clean Architecture** - 保守性の高い設計
@@ -60,7 +61,9 @@ macOS 12.0+
 2. **API キーの設定**
    ```bash
    # API_KEYS_SETUP.md を参照してキーを設定
-   cp Config/APIKeys.example.swift Config/APIKeys.swift
+   # Config.plist を作成して OpenAI/Places/AdMob を設定
+   cp DontGoHomeStraight/App/Config/Config.sample.plist DontGoHomeStraight/App/Config/Config.plist
+   open DontGoHomeStraight.xcodeproj
    ```
 
 3. **プロジェクトの起動**

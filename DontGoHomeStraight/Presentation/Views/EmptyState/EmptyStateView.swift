@@ -122,22 +122,9 @@ struct EmptyStateView: View {
                 .font(AppFont.footnote)
                 .foregroundColor(.secondary)
             
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.brandPrimary20)
-                .frame(height: 120)
-                .overlay(
-                    VStack(spacing: 8) {
-                        Image(systemName: "rectangle.3.offgrid")
-                            .font(.title2)
-                            .foregroundColor(.brandPrimary60)
-                        
-                        Text("広告スペース")
-                            .font(AppFont.footnote)
-                            .foregroundColor(.brandPrimary60)
-                    }
-                )
-                .accessibilityLabel("広告プレースホルダ")
-                .accessibilityHint("将来的に広告が表示される予定のスペースです")
+            NativeAdContainerView(adUnitId: Environment.adMobNativeAdUnitId)
+                .frame(maxWidth: .infinity)
+                .cornerRadius(12)
         }
     }
     

@@ -20,4 +20,9 @@ struct FeatureFlags {
     static var detourSystemPicker: Bool {
         return boolValue(for: "DETOUR_SYSTEM_PICKER", default: false)
     }
+    
+    // ads.enabled: Toggle for showing ads (default ON)
+    static var adsEnabled: Bool {
+        return boolValue(for: "ADS_ENABLED", default: true)
+    }
 }
