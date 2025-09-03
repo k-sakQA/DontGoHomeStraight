@@ -4,6 +4,8 @@ enum Environment {
     enum Keys {
         static let openAIAPIKey = "OPENAI_API_KEY"
         static let googlePlacesAPIKey = "GOOGLE_PLACES_API_KEY"
+        static let adMobAppId = "ADMOB_APP_ID"
+        static let adMobNativeAdUnitId = "ADMOB_NATIVE_AD_UNIT_ID"
     }
     
     static func value(for key: String) -> String {
@@ -29,6 +31,12 @@ enum Environment {
             return "sk-dev-openai-key"
         case Keys.googlePlacesAPIKey:
             return "dev-google-places-key"
+        case Keys.adMobAppId:
+            // Google sample AdMob App ID
+            return "ca-app-pub-3940256099942544~1458002511"
+        case Keys.adMobNativeAdUnitId:
+            // Google sample Native Advanced Ad Unit ID
+            return "ca-app-pub-3940256099942544/3986624511"
         default:
             fatalError("環境変数 \(key) が設定されていません")
         }
@@ -43,6 +51,14 @@ enum Environment {
     
     static var googlePlacesAPIKey: String {
         return value(for: Keys.googlePlacesAPIKey)
+    }
+    
+    static var adMobAppId: String {
+        return value(for: Keys.adMobAppId)
+    }
+    
+    static var adMobNativeAdUnitId: String {
+        return value(for: Keys.adMobNativeAdUnitId)
     }
 }
 

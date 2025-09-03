@@ -8,5 +8,11 @@
 	<string>YOUR_GOOGLE_PLACES_API_KEY_HERE</string>
 	<key>DETOUR_SYSTEM_PICKER</key>
 	<false/>
+	<key>ADS_ENABLED</key>
+	<true/>
+	<key>ADMOB_APP_ID</key>
+	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<key>ADMOB_NATIVE_AD_UNIT_ID</key>
+	<string>ca-app-pub-3940256099942544/3986624511</string>
 </dict>
 </plist>

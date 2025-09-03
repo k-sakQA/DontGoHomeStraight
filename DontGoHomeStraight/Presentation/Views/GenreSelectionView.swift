@@ -87,6 +87,8 @@ struct GenreSelectionView: View {
                         }
                     )
                 }
+                // Sponsored card as 4th item
+                sponsoredCard
             }
         }
     }
@@ -141,6 +143,45 @@ struct GenreSelectionView: View {
         case .other:
             return "~15分"
         }
+    }
+}
+
+// MARK: - Sponsored Card
+
+extension GenreSelectionView {
+    @ViewBuilder
+    var sponsoredCard: some View {
+        VStack(spacing: 14) {
+            HStack {
+                Text("寄り道スポンサー")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Color(hex: "0D1B3A"))
+                Spacer()
+                Text("Ad")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 2)
+                    .background(Color.gray.opacity(0.6))
+                    .cornerRadius(6)
+                    .accessibilityLabel("広告")
+            }
+            .padding(.bottom, 2)
+            
+            NativeAdContainerView(adUnitId: Environment.adMobNativeAdUnitId)
+                .frame(maxWidth: .infinity)
+                .cornerRadius(12)
+        }
+        .padding(18)
+        .background(
+            LinearGradient(
+                colors: [Color(hex: "EDF3FF"), Color(hex: "E6EEFF")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .cornerRadius(20)
+        .shadow(color: .black.opacity(0.08), radius: 25, x: 0, y: 10)
     }
 }
 

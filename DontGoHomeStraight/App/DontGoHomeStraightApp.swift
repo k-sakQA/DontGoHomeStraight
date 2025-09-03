@@ -6,6 +6,9 @@
 //
 
 import SwiftUI
+#if canImport(GoogleMobileAds)
+import GoogleMobileAds
+#endif
 
 @main
 struct DontGoHomeStraightApp: App {
@@ -39,6 +42,19 @@ struct DontGoHomeStraightApp: App {
         #if DEBUG
         print("✅ Dependency Container initialized")
         #endif
+        
+        // Initialize AdMob
+        if FeatureFlags.adsEnabled {
+            #if canImport(GoogleMobileAds)
+            let appId = Environment.adMobAppId
+            if appId.isEmpty == false {
+                GADMobileAds.sharedInstance().start(completionHandler: nil)
+                #if DEBUG
+                print("📣 AdMob initialized")
+                #endif
+            }
+            #endif
+        }
     }
 }
 
