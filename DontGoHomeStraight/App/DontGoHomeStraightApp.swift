@@ -48,9 +48,10 @@ struct DontGoHomeStraightApp: App {
             #if canImport(GoogleMobileAds)
             let appId = Environment.adMobAppId
             if appId.isEmpty == false {
-                GADMobileAds.sharedInstance().start(completionHandler: nil)
+                MobileAds.shared.start(completionHandler: nil)
                 #if DEBUG
                 print("📣 AdMob initialized")
+                // Using Google demo ad units, no test device IDs required on iOS 12+ SDK
                 #endif
             }
             #endif

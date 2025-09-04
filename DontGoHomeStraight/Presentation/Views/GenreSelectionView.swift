@@ -87,7 +87,7 @@ struct GenreSelectionView: View {
                         }
                     )
                 }
-                // Sponsored card as 4th item
+                // ネイティブ広告（アプリUIに溶け込むカード）
                 sponsoredCard
             }
         }
@@ -168,8 +168,10 @@ extension GenreSelectionView {
             }
             .padding(.bottom, 2)
             
+            // AdMobポリシー準拠: 固定高さで表示
             NativeAdContainerView(adUnitId: Environment.adMobNativeAdUnitId)
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 180)  // 幅を最大化、高さ固定
+                .clipped()  // はみ出し防止
                 .cornerRadius(12)
         }
         .padding(18)
@@ -182,6 +184,23 @@ extension GenreSelectionView {
         )
         .cornerRadius(20)
         .shadow(color: .black.opacity(0.08), radius: 25, x: 0, y: 10)
+    }
+}
+
+// MARK: - Raw Native Ad Section (no frame/background)
+
+extension GenreSelectionView {
+    @ViewBuilder
+    var rawNativeAdSection: some View {
+        if FeatureFlags.adsEnabled {
+            #if canImport(GoogleMobileAds)
+            AdMobNativeAdView(adUnitId: Environment.adMobNativeAdUnitId)
+            #else
+            EmptyView()
+            #endif
+        } else {
+            EmptyView()
+        }
     }
 }
 
