@@ -67,7 +67,7 @@ struct HomeView: View {
                     .font(.system(size: 22, weight: .bold))
                     .foregroundColor(Color(hex: "212529"))
                 
-                Text("今日は寄り道してみませんか？")
+                Text("寄り道先を探そう！")
                     .font(.system(size: 14))
                     .foregroundColor(Color(hex: "6C757D"))
             }
@@ -206,6 +206,7 @@ struct HomeView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity)
         .appCard()
     }
     

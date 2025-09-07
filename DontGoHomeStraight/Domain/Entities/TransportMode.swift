@@ -10,7 +10,7 @@ enum TransportMode: String, CaseIterable {
         switch self {
         case .walking: return "徒歩"
         case .driving: return "車"
-        case .transit: return "公共交通機関"
+        case .transit: return "交通機関"
         case .cycling: return "自転車"
         }
     }

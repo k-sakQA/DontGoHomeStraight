@@ -48,7 +48,7 @@ struct LandingView: View {
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(Color(hex: "212529"))
                 
-                Text("今日は寄り道してみませんか？")
+                Text("どこか寄り道したい！")
                     .font(.system(size: 16))
                     .foregroundColor(Color(hex: "6C757D"))
             }
