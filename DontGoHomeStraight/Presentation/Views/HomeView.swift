@@ -104,11 +104,23 @@ struct HomeView: View {
                     
                     VStack(alignment: .leading, spacing: 0) {
                         TextField(
-                            "例）長野駅 ／ 住所を入力",
+                            "",
                             text: $destinationText
                         )
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .disabled(!viewModel.isLocationAvailable)
+                        .overlay(
+                            Group {
+                                if destinationText.isEmpty {
+                                    HStack {
+                                        Text("例）新宿駅 ／ 住所を入力")
+                                            .foregroundColor(.red)
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 12)
+                                }
+                            }
+                        )
                         .onChange(of: destinationText) { newValue in
                             searchAddressSuggestions(for: newValue)
                         }
@@ -246,6 +258,7 @@ struct HomeView: View {
             }
             .buttonStyle(BlueButtonStyle())
             .disabled(!canStartJourney)
+            .opacity(canStartJourney ? 1.0 : 0.6)
         }
         .appCard()
     }

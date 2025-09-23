@@ -89,6 +89,18 @@ struct LandingView: View {
                 .font(.system(size: 12))
                 .foregroundColor(Color(hex: "6C757D"))
                 .multilineTextAlignment(.center)
+
+            // プライバシーポリシーへのリンク（App Store 対応）
+            if let policyURL = URL(string: "https://generated-lupin-fb3.notion.site/26ae4385342e80acb80afd7bd0313257?source=copy_link") {
+                Link(destination: policyURL) {
+                    Text("プライバシーポリシー")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(hex: "3A7DFF"))
+                        .underline()
+                        .frame(maxWidth: .infinity)
+                }
+                .accessibilityLabel("プライバシーポリシーへのリンク")
+            }
         }
     }
     
