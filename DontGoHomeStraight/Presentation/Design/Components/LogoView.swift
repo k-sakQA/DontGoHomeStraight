@@ -13,26 +13,45 @@ struct LogoView: View {
     /// ロゴのサイズ (デフォルト: 96pt)
     let size: CGFloat
     
+    /// 表示する見た目（自動/ライト/ダーク）
+    enum Appearance {
+        case auto
+        case light
+        case dark
+    }
+    let appearance: Appearance
+    
     /// 現在のカラースキーム（ライト/ダーク）
     @SwiftUI.Environment(\.colorScheme) private var colorScheme
     
     // MARK: - Initialization
     
     /// LogoViewを初期化
-    /// - Parameter size: ロゴのサイズ (デフォルト: 96pt)
-    init(size: CGFloat = 96) {
+    /// - Parameters:
+    ///   - size: ロゴのサイズ (デフォルト: 96pt)
+    ///   - appearance: 見た目（自動/ライト/ダーク）。ライト指定で常にblue、ダーク指定でwhite
+    init(size: CGFloat = 96, appearance: Appearance = .auto) {
         self.size = size
+        self.appearance = appearance
     }
     
     // MARK: - Body
     
     var body: some View {
-        Image("AppLogo")
+        let image = Image("AppLogo")
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: size, height: size)
             .accessibilityLabel("アプリロゴ")
             .accessibilityHint("DontGoHomeStraightアプリのロゴ")
+        switch appearance {
+        case .auto:
+            image
+        case .light:
+            image.environment(\.colorScheme, .light)
+        case .dark:
+            image.environment(\.colorScheme, .dark)
+        }
     }
 }
 

@@ -51,7 +51,8 @@ struct HomeView: View {
     private var headerSection: some View {
         HStack(spacing: 16) {
             // ロゴ
-            LogoView(size: 44)
+            // 画面左上のロゴ（blueを使用、1.5倍 = 72pt -> 108pt）
+            LogoView(size: 108, appearance: .light)
                 .background(
                     LinearGradient(
                         colors: [Color(hex: "3A7DFF"), Color(hex: "6AA9FF")],
@@ -64,7 +65,7 @@ struct HomeView: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text("まっすぐ帰りたくない")
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.system(size: 18, weight: .bold))
                     .foregroundColor(Color(hex: "212529"))
                 
                 Text("寄り道先を探そう！")

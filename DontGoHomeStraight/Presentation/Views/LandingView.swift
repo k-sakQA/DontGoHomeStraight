@@ -36,8 +36,8 @@ struct LandingView: View {
     @ViewBuilder
     private var logoSection: some View {
         VStack(spacing: 24) {
-            // アプリロゴ
-            LogoView(size: 120)
+            // アプリロゴ（blueを使用、サイズを倍に）
+            LogoView(size: 240, appearance: .light)
                 .scaleEffect(showLogo ? 1.0 : 0.5)
                 .opacity(showLogo ? 1.0 : 0.0)
                 .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showLogo)
