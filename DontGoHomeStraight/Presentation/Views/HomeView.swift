@@ -67,13 +67,35 @@ struct HomeView: View {
                 Text("まっすぐ帰りたくない")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(Color(hex: "212529"))
-                
+
                 Text("寄り道先を探そう！")
                     .font(.system(size: 14))
                     .foregroundColor(Color(hex: "6C757D"))
             }
-            
+
             Spacer()
+
+            // 寄り道図鑑への入り口
+            Button(action: {
+                viewModel.navigateToCollection()
+            }) {
+                VStack(spacing: 4) {
+                    Image(systemName: "book.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(Color(hex: "3A7DFF"))
+                    Text("図鑑")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(Color(hex: "3A7DFF"))
+                }
+                .frame(width: 56, height: 56)
+                .background(Color.white)
+                .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color(hex: "DCE7FF"), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 4)
+            }
         }
     }
     

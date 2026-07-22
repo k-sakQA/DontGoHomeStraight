@@ -50,9 +50,11 @@ struct ContentView: View {
             DontGoHomeStraight.NavigationView(viewModel: appViewModel)
         case .arrival:
             ArrivalView(viewModel: appViewModel)
+        case .collection:
+            CollectionView(viewModel: appViewModel)
         }
     }
-    
+
     @ViewBuilder
     private var errorOverlay: some View {
         ZStack {
@@ -231,6 +233,9 @@ struct AnimatedContentView: View {
                     case .arrival:
                         ArrivalView(viewModel: appViewModel)
                             .transition(.scale.combined(with: .opacity))
+                    case .collection:
+                        CollectionView(viewModel: appViewModel)
+                            .transition(.slideFromRight)
                     }
                 }
                 .animation(.easeInOut(duration: 0.3), value: appViewModel.currentScreen)

@@ -3,6 +3,7 @@ import SwiftUI
 struct GenreSelectionView: View {
     @ObservedObject var viewModel: AppViewModel
     @State private var selectedGenre: Genre?
+    @State private var flippedCardIds: Set<String> = []
     
     var body: some View {
         ZStack {
@@ -57,14 +58,16 @@ struct GenreSelectionView: View {
     
     @ViewBuilder
     private var headerSection: some View {
-        VStack(spacing: 16) {
-            Text("寄り道の提案ができました！")
-                .font(.system(size: 22, weight: .bold))
-                .foregroundColor(Color(hex: "212529"))
-            
-            Text("どの寄り道を選びますか？")
-                .font(.system(size: 14))
-                .foregroundColor(Color(hex: "6C757D"))
+        if !viewModel.recommendedGenres.isEmpty {
+            VStack(spacing: 16) {
+                Text("寄り道カードが届きました！")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(Color(hex: "212529"))
+
+                Text("カードをめくって、運命の寄り道を選ぼう")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "6C757D"))
+            }
         }
     }
     
@@ -77,13 +80,24 @@ struct GenreSelectionView: View {
         } else {
             VStack(spacing: 16) {
                 ForEach(Array(viewModel.recommendedGenres.prefix(3).enumerated()), id: \.element.id) { index, genre in
-                    ModernGenreCard(
-                        genre: genre,
-                        duration: estimatedDuration(for: genre),
-                        onTap: {
-                            selectedGenre = genre
-                            viewModel.setSelectedGenre(genre)
-                            viewModel.navigateToNavigation()
+                    FlipCardView(
+                        isFlipped: flippedCardIds.contains(genre.id),
+                        onFlip: {
+                            flippedCardIds.insert(genre.id)
+                        },
+                        front: {
+                            ModernGenreCard(
+                                genre: genre,
+                                duration: estimatedDuration(for: genre),
+                                onTap: {
+                                    selectedGenre = genre
+                                    viewModel.setSelectedGenre(genre)
+                                    viewModel.navigateToNavigation()
+                                }
+                            )
+                        },
+                        back: {
+                            DetourCardBack(index: index + 1)
                         }
                     )
                 }
@@ -92,28 +106,34 @@ struct GenreSelectionView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var emptyStateView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "questionmark.circle")
-                .font(.system(size: 60))
-                .foregroundColor(.gray)
-            
-            Text("候補地がありません")
-                .font(.title3)
-                .fontWeight(.medium)
-            
-            Text("今日はまっすぐ帰りましょう🎵")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
+        VStack(spacing: 20) {
+            VStack(spacing: 14) {
+                Text("🌙")
+                    .font(.system(size: 52))
+
+                Text("候補地がありません")
+                    .font(.title3)
+                    .fontWeight(.medium)
+
+                Text("今日はまっすぐ帰りましょう🎵")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Color(hex: "212529"))
+            }
+            .frame(maxWidth: .infinity)
+            .appCard()
+
+            // まっすぐ帰る日も、ちょっとだけ楽しく
+            TriviaCardView()
+
             Button("最初に戻る") {
                 viewModel.navigateToHome()
             }
             .buttonStyle(SecondaryButtonStyle())
         }
-        .padding()
+        .padding(.top, 8)
     }
     
     @ViewBuilder

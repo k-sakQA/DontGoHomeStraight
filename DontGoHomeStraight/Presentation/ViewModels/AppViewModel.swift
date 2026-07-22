@@ -22,6 +22,9 @@ class AppViewModel: ObservableObject {
     @Published var selectedGenre: Genre?
     @Published var currentRoute: NavigationRoute?
     @Published var arrivedPlace: Place?
+
+    // 寄り道図鑑
+    @Published var visitedSpots: [VisitedSpot] = []
     
     // Location
     @Published var locationPermissionStatus: CLAuthorizationStatus = .notDetermined
@@ -33,6 +36,7 @@ class AppViewModel: ObservableObject {
     private let navigationUseCase: NavigationUseCase
     private let locationRepository: LocationRepository
     private let systemWaypointSuggestionUseCase: SystemWaypointSuggestionUseCase?
+    private let visitedSpotRepository: VisitedSpotRepository
     
     // MARK: - Private Properties
     
@@ -44,13 +48,16 @@ class AppViewModel: ObservableObject {
         placeRecommendationUseCase: PlaceRecommendationUseCase,
         navigationUseCase: NavigationUseCase,
         locationRepository: LocationRepository,
-        systemWaypointSuggestionUseCase: SystemWaypointSuggestionUseCase? = nil
+        systemWaypointSuggestionUseCase: SystemWaypointSuggestionUseCase? = nil,
+        visitedSpotRepository: VisitedSpotRepository = VisitedSpotRepositoryImpl()
     ) {
         self.placeRecommendationUseCase = placeRecommendationUseCase
         self.navigationUseCase = navigationUseCase
         self.locationRepository = locationRepository
         self.systemWaypointSuggestionUseCase = systemWaypointSuggestionUseCase
-        
+        self.visitedSpotRepository = visitedSpotRepository
+        self.visitedSpots = visitedSpotRepository.getAll()
+
         setupLocationObserver()
         setupArrivalNotification()
     }
@@ -154,11 +161,45 @@ class AppViewModel: ObservableObject {
         resetJourneyData()
         currentScreen = .home
     }
-    
+
     func navigateToLanding() {
         // 状態をリセット
         resetJourneyData()
         currentScreen = .landing
+    }
+
+    // MARK: - Collection (寄り道図鑑)
+
+    func navigateToCollection() {
+        visitedSpots = visitedSpotRepository.getAll()
+        currentScreen = .collection
+    }
+
+    func closeCollection() {
+        // ホーム画面は画面遷移で入力状態がリセットされるため、旅データも揃えてリセットする
+        navigateToHome()
+    }
+
+    /// 経由地への到着を確定させる: 図鑑に記録し、Live Activityで種明かしして到着画面へ
+    func registerArrival(place: Place) {
+        // 到着チェックのタイマーと通知の二重発火を防ぐ
+        if currentScreen == .arrival && arrivedPlace?.placeId == place.placeId {
+            return
+        }
+
+        visitedSpotRepository.record(place: place, mood: selectedMood)
+        visitedSpots = visitedSpotRepository.getAll()
+
+        DetourLiveActivityManager.shared.endWithReveal(placeName: place.name)
+
+        arrivedPlace = place
+        currentScreen = .arrival
+    }
+
+    // MARK: - Live Activity
+
+    func updateDetourLiveActivityDistance(_ meters: Double) {
+        DetourLiveActivityManager.shared.updateDistance(meters)
     }
     
     // MARK: - Journey Data Management
@@ -180,6 +221,7 @@ class AppViewModel: ObservableObject {
     }
     
     private func resetJourneyData() {
+        DetourLiveActivityManager.shared.endImmediately()
         destination = nil
         selectedTransportMode = nil
         selectedMood = nil
@@ -293,10 +335,11 @@ class AppViewModel: ObservableObject {
             
             if genres.isEmpty {
                 #if DEBUG
-                print("❌ No genres returned - showing empty message")
+                print("❌ No genres returned - showing empty state with trivia")
                 #endif
-                showErrorMessage("候補地がありません。今日はまっすぐ帰りましょう🎵")
-                navigateToHome()
+                // エラーではなく「まっすぐ帰りましょう🎵」+ 豆知識の空状態を表示
+                recommendedGenres = []
+                currentScreen = .genreSelection
             } else {
                 recommendedGenres = genres
                 currentScreen = .genreSelection
@@ -342,7 +385,13 @@ class AppViewModel: ObservableObject {
             
             currentRoute = route
             currentScreen = .navigation
-            
+
+            // ロック画面・Dynamic Islandにミステリー寄り道を表示
+            DetourLiveActivityManager.shared.start(
+                genre: genre,
+                destinationName: destination.name
+            )
+
         } catch {
             handleError(error)
         }
@@ -352,11 +401,10 @@ class AppViewModel: ObservableObject {
     
     private func handleArrival(placeId: String) async {
         guard let selectedGenre = selectedGenre else { return }
-        
+
         // キャッシュからスポット情報を取得
         if let place = await navigationUseCase.getWaypointForGenre(selectedGenre) {
-            arrivedPlace = place
-            currentScreen = .arrival
+            registerArrival(place: place)
         }
     }
     
@@ -439,7 +487,8 @@ enum AppScreen: CaseIterable {
     case genreSelection
     case navigation
     case arrival
-    
+    case collection
+
     var title: String {
         switch self {
         case .landing: return "まっすぐ帰りたくない"
@@ -450,6 +499,7 @@ enum AppScreen: CaseIterable {
         case .genreSelection: return "どのジャンルにする？"
         case .navigation: return "経路案内"
         case .arrival: return "到着！"
+        case .collection: return "寄り道図鑑"
         }
     }
 }
