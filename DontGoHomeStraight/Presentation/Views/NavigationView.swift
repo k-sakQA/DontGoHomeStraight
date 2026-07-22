@@ -340,16 +340,19 @@ struct NavigationView: View {
         
         Task {
             if let waypoint = await viewModel.getWaypointForGenre(selectedGenre) {
+                // Live Activityの残り距離を更新
+                let distance = waypoint.distance(from: currentLocation)
+                viewModel.updateDetourLiveActivityDistance(distance)
+
                 let isArrived = viewModel.checkArrival(
                     currentLocation: currentLocation,
                     waypoint: waypoint,
                     threshold: 100.0 // 100m以内で到着とみなす
                 )
-                
+
                 if isArrived {
                     DispatchQueue.main.async {
-                        viewModel.arrivedPlace = waypoint
-                        viewModel.currentScreen = .arrival
+                        viewModel.registerArrival(place: waypoint)
                         stopArrivalCheck()
                     }
                 }

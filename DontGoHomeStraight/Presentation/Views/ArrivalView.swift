@@ -139,6 +139,21 @@ struct ArrivalView: View {
     @ViewBuilder
     private var actionButtons: some View {
         VStack(spacing: 10) {
+            // 図鑑への記録通知
+            HStack(spacing: 8) {
+                Image(systemName: "book.fill")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "3A7DFF"))
+                Text("この寄り道は図鑑に記録されました")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(Color(hex: "4B5563"))
+            }
+            .padding(.vertical, 10)
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity)
+            .background(Color(hex: "EDF3FF"))
+            .cornerRadius(12)
+
             Button(action: {
                 showShareSheet = true
             }) {
@@ -146,7 +161,15 @@ struct ArrivalView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle())
-            
+
+            Button(action: {
+                viewModel.navigateToCollection()
+            }) {
+                Text("寄り道図鑑を見る")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(SecondaryButtonStyle())
+
             Button(action: {
                 viewModel.navigateToLanding()
             }) {

@@ -45,6 +45,10 @@ class DependencyContainer {
     private lazy var locationRepository: LocationRepository = {
         return LocationRepositoryImpl()
     }()
+
+    private lazy var visitedSpotRepository: VisitedSpotRepository = {
+        return VisitedSpotRepositoryImpl()
+    }()
     
     // MARK: - Use Cases
     private lazy var placeRecommendationUseCase: PlaceRecommendationUseCase = {
@@ -104,7 +108,8 @@ class DependencyContainer {
             placeRecommendationUseCase: placeRecommendationUseCase,
             navigationUseCase: navigationUseCase,
             locationRepository: locationRepository,
-            systemWaypointSuggestionUseCase: systemWaypointSuggestionUseCase
+            systemWaypointSuggestionUseCase: systemWaypointSuggestionUseCase,
+            visitedSpotRepository: visitedSpotRepository
         )
     }()
     
