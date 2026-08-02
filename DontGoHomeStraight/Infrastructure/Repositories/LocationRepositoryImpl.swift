@@ -59,22 +59,32 @@ class LocationRepositoryImpl: NSObject, LocationRepository {
         locationManager.stopUpdatingLocation()
     }
     
-    func startGoogleMapsNavigation(route: NavigationRoute) async throws {
-        // Google Mapsアプリがインストールされているかチェック
-        guard let googleMapsURL = route.googleMapsURL,
-              await UIApplication.shared.canOpenURL(googleMapsURL) else {
-            
-            // Google Mapsが利用できない場合はApple Mapsを使用
-            if let appleMapsURL = route.appleMapsURL {
-                await UIApplication.shared.open(appleMapsURL)
-                return
+    func openNavigation(route: NavigationRoute, provider: MapsProvider) async throws {
+        switch provider {
+        case .google:
+            // Google Mapsアプリがインストールされているかチェック
+            guard let googleMapsURL = route.googleMapsURL,
+                  await UIApplication.shared.canOpenURL(googleMapsURL) else {
+
+                // Google Mapsが利用できない場合は標準搭載のApple Mapsにフォールバック
+                if let appleMapsURL = route.appleMapsURL {
+                    await UIApplication.shared.open(appleMapsURL)
+                    return
+                }
+
+                throw LocationError.googleMapsNotInstalled
             }
-            
-            throw LocationError.googleMapsNotInstalled
+
+            // Google Mapsアプリでナビゲーション開始
+            await UIApplication.shared.open(googleMapsURL)
+
+        case .apple:
+            // ユーザーが明示的にApple Mapsを選択した場合はApple Mapsで開く
+            guard let appleMapsURL = route.appleMapsURL else {
+                throw LocationError.appleMapsUnavailable
+            }
+            await UIApplication.shared.open(appleMapsURL)
         }
-        
-        // Google Mapsアプリでナビゲーション開始
-        await UIApplication.shared.open(googleMapsURL)
     }
     
     func checkArrival(at waypoint: Place, threshold: CLLocationDistance) -> Bool {

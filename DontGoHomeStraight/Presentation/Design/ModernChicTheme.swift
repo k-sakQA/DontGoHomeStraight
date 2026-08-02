@@ -138,6 +138,36 @@ struct ChipStyle: ButtonStyle {
     }
 }
 
+// MARK: - Maps Provider Style
+
+/// 経路案内画面の「Google Maps / Apple Maps」選択ボタン用スタイル
+/// isPreferred: 前回選んだ（または初期デフォルトの）プロバイダかどうか
+struct MapsProviderButtonStyle: ButtonStyle {
+    let isPreferred: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundColor(isPreferred ? .white : Color(hex: "2E3238"))
+            .background(
+                Group {
+                    if isPreferred {
+                        LinearGradient.appHeroGradient
+                    } else {
+                        LinearGradient(colors: [Color.white, Color.white], startPoint: .top, endPoint: .bottom)
+                    }
+                }
+                .opacity(configuration.isPressed ? 0.85 : 1.0)
+            )
+            .cornerRadius(14)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(isPreferred ? Color.clear : Color(hex: "E9EDF3"), lineWidth: 1)
+            )
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.8), value: configuration.isPressed)
+    }
+}
+
 // MARK: - Tab Style
 
 struct TabStyle: ButtonStyle {
