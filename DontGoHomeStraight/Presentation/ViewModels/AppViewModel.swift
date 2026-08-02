@@ -521,11 +521,12 @@ enum AppScreen: CaseIterable {
     }
 }
 
-// MARK: - Debug Extensions
-
-#if DEBUG
+// MARK: - Preview Support
+// SwiftUIの #Preview マクロはRelease/Archiveビルドでも型チェックされるため、
+// #if DEBUG で囲むとArchive時に「has no member 'preview'」エラーになる。
+// そのため常にコンパイルする（Mockクラス自体は無害で本体の動作に影響しない）。
 extension AppViewModel {
-    
+
     static var preview: AppViewModel {
         // プレビュー用のモックインスタンス
         let mockAIRepo = MockAIRecommendationRepository()
@@ -660,4 +661,3 @@ class MockLocationRepository: LocationRepository {
     func openNavigation(route: NavigationRoute, provider: MapsProvider) async throws {}
     func checkArrival(at waypoint: Place, threshold: CLLocationDistance) -> Bool { return false }
 }
-#endif
