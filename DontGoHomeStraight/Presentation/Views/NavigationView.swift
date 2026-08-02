@@ -3,30 +3,29 @@ import MapKit
 
 struct NavigationView: View {
     @ObservedObject var viewModel: AppViewModel
-    @State private var showingGoogleMapsAlert = false
     @State private var arrivalCheckTimer: Timer?
     @State private var timeElapsed = 0
-    
+
     var body: some View {
         ZStack {
             LinearGradient.appBackgroundGradient
                 .ignoresSafeArea()
-            
+
             ScrollView {
                 VStack(spacing: 24) {
                     // ヘッダー情報
                     headerSection
-                    
+
                     // 経路情報
                     if let route = viewModel.currentRoute {
                         routeInfoCard(route)
                     }
-                    
+
+                    // 地図アプリ選択・起動
+                    mapsLaunchCard
+
                     // 到着チェック状況
                     arrivalCheckCard
-                    
-                    // アクションボタン
-                    actionButtons
                 }
                 .padding()
             }
@@ -40,21 +39,28 @@ struct NavigationView: View {
         .onDisappear {
             stopArrivalCheck()
         }
-        .alert("Google Mapsが見つかりません", isPresented: $showingGoogleMapsAlert) {
-            Button("OK") { }
+        .alert("地図アプリを起動できません", isPresented: mapsErrorAlertBinding) {
+            Button("OK") { viewModel.mapsLaunchErrorMessage = nil }
         } message: {
-            Text("Google Mapsアプリがインストールされていません。App Storeからダウンロードしてください。")
+            Text(viewModel.mapsLaunchErrorMessage ?? "")
         }
+    }
+
+    private var mapsErrorAlertBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel.mapsLaunchErrorMessage != nil },
+            set: { if !$0 { viewModel.mapsLaunchErrorMessage = nil } }
+        )
     }
     
     @ViewBuilder
     private var headerSection: some View {
         VStack(spacing: 12) {
-            Text("経路案内開始！")
+            Text("寄り道の準備ができました！")
                 .font(.system(size: 22, weight: .bold))
                 .foregroundColor(Color(hex: "212529"))
-            
-            Text("Google Mapsアプリでナビゲーションが開始されます")
+
+            Text("お好きな地図アプリでナビゲーションを開始できます")
                 .font(.system(size: 14))
                 .foregroundColor(Color(hex: "6C757D"))
                 .multilineTextAlignment(.center)
@@ -285,19 +291,21 @@ struct NavigationView: View {
     }
     
     @ViewBuilder
-    private var actionButtons: some View {
-        VStack(spacing: 12) {
-            Button(action: {
-                openGoogleMaps()
-            }) {
-                HStack {
-                    Image(systemName: "map")
-                    Text("Google Maps起動")
-                }
-                .frame(maxWidth: .infinity)
+    private var mapsLaunchCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("地図アプリを選んで経路案内を開始")
+                .font(.system(size: 13))
+                .foregroundColor(Color(hex: "6C757D"))
+
+            HStack(spacing: 10) {
+                mapsProviderButton(.google)
+                mapsProviderButton(.apple)
             }
-            .buttonStyle(PrimaryButtonStyle())
-            
+
+            Text("好きな地図アプリでいつでも切り替えて起動できます")
+                .font(.system(size: 11))
+                .foregroundColor(Color(hex: "ADB5BD"))
+
             Button(action: {
                 viewModel.navigateToHome()
             }) {
@@ -305,7 +313,26 @@ struct NavigationView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(SecondaryButtonStyle())
+            .padding(.top, 4)
         }
+        .appCard()
+    }
+
+    @ViewBuilder
+    private func mapsProviderButton(_ provider: MapsProvider) -> some View {
+        Button(action: {
+            viewModel.openMaps(provider: provider)
+        }) {
+            VStack(spacing: 6) {
+                Image(systemName: provider.icon)
+                    .font(.system(size: 20))
+                Text(provider.displayName)
+                    .font(.system(size: 13, weight: .semibold))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+        }
+        .buttonStyle(MapsProviderButtonStyle(isPreferred: viewModel.preferredMapsProvider == provider))
     }
     
     // MARK: - Private Methods
@@ -355,27 +382,6 @@ struct NavigationView: View {
                         viewModel.registerArrival(place: waypoint)
                         stopArrivalCheck()
                     }
-                }
-            }
-        }
-    }
-    
-    private func openGoogleMaps() {
-        guard let route = viewModel.currentRoute,
-              let finalDestination = viewModel.destination else { return }
-        
-        Task {
-            do {
-                // 経由地経由で最終目的地に向かうナビゲーション
-                _ = try await viewModel.startNavigationWithRoute(
-                    origin: route.origin,
-                    destination: finalDestination.coordinate,  // 最終目的地を指定
-                    selectedGenre: viewModel.selectedGenre!,
-                    transportMode: route.transportMode
-                )
-            } catch {
-                if error is LocationError {
-                    showingGoogleMapsAlert = true
                 }
             }
         }

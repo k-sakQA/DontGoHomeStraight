@@ -25,6 +25,10 @@ class AppViewModel: ObservableObject {
 
     // 寄り道図鑑
     @Published var visitedSpots: [VisitedSpot] = []
+
+    // 地図アプリ選択（前回選んだものをデフォルトとして記憶する）
+    @Published var preferredMapsProvider: MapsProvider = MapsProviderPreference.load()
+    @Published var mapsLaunchErrorMessage: String?
     
     // Location
     @Published var locationPermissionStatus: CLAuthorizationStatus = .notDetermined
@@ -267,8 +271,20 @@ class AppViewModel: ObservableObject {
         return navigationUseCase.checkArrival(currentLocation: currentLocation, waypoint: waypoint, threshold: threshold)
     }
     
-    func startNavigationWithRoute(origin: CLLocationCoordinate2D, destination: CLLocationCoordinate2D, selectedGenre: Genre, transportMode: TransportMode) async throws -> NavigationRoute {
-        return try await navigationUseCase.startNavigation(origin: origin, destination: destination, selectedGenre: selectedGenre, transportMode: transportMode)
+    /// 現在の経路を、指定した地図アプリで起動する（経路案内画面のボタンから明示的に呼ばれる）
+    func openMaps(provider: MapsProvider) {
+        guard let route = currentRoute else { return }
+
+        preferredMapsProvider = provider
+        MapsProviderPreference.save(provider)
+
+        Task {
+            do {
+                try await navigationUseCase.launchNavigation(route: route, provider: provider)
+            } catch {
+                mapsLaunchErrorMessage = (error as? LocalizedError)?.errorDescription ?? "地図アプリを起動できませんでした"
+            }
+        }
     }
     
     private func getRecommendations(forceAI: Bool = false) async {
@@ -376,13 +392,14 @@ class AppViewModel: ObservableObject {
         do {
             // ユーザー選択の行き先を永続保存（ユースケースに委譲）
             await navigationUseCase.persistSelectedWaypoint(for: genre)
-            let route = try await navigationUseCase.startNavigation(
+            // 経路は作成するが、地図アプリはまだ起動しない（ユーザーが経路案内画面で選ぶ）
+            let route = try await navigationUseCase.buildRoute(
                 origin: currentLocation,
                 destination: destination.coordinate,
                 selectedGenre: genre,
                 transportMode: transportMode
             )
-            
+
             currentRoute = route
             currentScreen = .navigation
 
@@ -395,7 +412,7 @@ class AppViewModel: ObservableObject {
         } catch {
             handleError(error)
         }
-        
+
         isLoading = false
     }
     
@@ -640,7 +657,7 @@ class MockLocationRepository: LocationRepository {
     func requestLocationPermission() {}
     func startUpdatingLocation() {}
     func stopUpdatingLocation() {}
-    func startGoogleMapsNavigation(route: NavigationRoute) async throws {}
+    func openNavigation(route: NavigationRoute, provider: MapsProvider) async throws {}
     func checkArrival(at waypoint: Place, threshold: CLLocationDistance) -> Bool { return false }
 }
 #endif

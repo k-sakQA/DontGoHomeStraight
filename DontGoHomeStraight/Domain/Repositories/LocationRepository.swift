@@ -10,7 +10,8 @@ protocol LocationRepository {
     func requestLocationPermission()
     func startUpdatingLocation()
     func stopUpdatingLocation()
-    func startGoogleMapsNavigation(route: NavigationRoute) async throws
+    /// 指定した地図アプリで経路案内を開く。ユーザーが明示的に選んだプロバイダで起動する
+    func openNavigation(route: NavigationRoute, provider: MapsProvider) async throws
     func checkArrival(at waypoint: Place, threshold: CLLocationDistance) -> Bool
 }
 
@@ -18,8 +19,9 @@ enum LocationError: LocalizedError {
     case permissionDenied
     case locationUnavailable
     case googleMapsNotInstalled
+    case appleMapsUnavailable
     case navigationFailed
-    
+
     var errorDescription: String? {
         switch self {
         case .permissionDenied:
@@ -28,6 +30,8 @@ enum LocationError: LocalizedError {
             return "現在地を取得できません。"
         case .googleMapsNotInstalled:
             return "Google Mapsアプリがインストールされていません。"
+        case .appleMapsUnavailable:
+            return "Apple Mapsを起動できませんでした。"
         case .navigationFailed:
             return "ナビゲーションの開始に失敗しました。"
         }

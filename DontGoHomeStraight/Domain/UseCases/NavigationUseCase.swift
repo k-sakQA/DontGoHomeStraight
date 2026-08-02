@@ -2,19 +2,23 @@ import Foundation
 import CoreLocation
 
 protocol NavigationUseCase {
-    func startNavigation(
+    /// 経路情報を作成する（地図アプリの起動は行わない）
+    func buildRoute(
         origin: CLLocationCoordinate2D,
         destination: CLLocationCoordinate2D,
         selectedGenre: Genre,
         transportMode: TransportMode
     ) async throws -> NavigationRoute
-    
+
+    /// ユーザーが選んだ地図アプリで経路案内を開始する
+    func launchNavigation(route: NavigationRoute, provider: MapsProvider) async throws
+
     func checkArrival(
         currentLocation: CLLocationCoordinate2D,
         waypoint: Place,
         threshold: CLLocationDistance
     ) -> Bool
-    
+
     func getWaypointForGenre(_ genre: Genre) async -> Place?
 
     /// ユーザーが選択したジャンルに対応する経由地を永続保存する
@@ -33,7 +37,7 @@ class NavigationUseCaseImpl: NavigationUseCase {
         self.locationRepository = locationRepository
     }
     
-    func startNavigation(
+    func buildRoute(
         origin: CLLocationCoordinate2D,
         destination: CLLocationCoordinate2D,
         selectedGenre: Genre,
@@ -43,19 +47,20 @@ class NavigationUseCaseImpl: NavigationUseCase {
         guard let waypoint = await cacheRepository.getPlaceForGenre(genre: selectedGenre) else {
             throw NavigationError.waypointNotFound
         }
-        
-        // 2. ナビゲーション経路を作成
+
+        // 2. ナビゲーション経路を作成（地図アプリはまだ起動しない。ユーザーが選ぶまで待つ）
         let route = NavigationRoute(
             origin: origin,
             destination: destination,
             waypoint: waypoint,
             transportMode: transportMode
         )
-        
-        // 3. Google Maps アプリで経路案内開始
-        try await locationRepository.startGoogleMapsNavigation(route: route)
-        
+
         return route
+    }
+
+    func launchNavigation(route: NavigationRoute, provider: MapsProvider) async throws {
+        try await locationRepository.openNavigation(route: route, provider: provider)
     }
     
     func checkArrival(
